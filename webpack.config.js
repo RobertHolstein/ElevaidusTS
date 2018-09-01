@@ -1,11 +1,14 @@
+var path = require('path');
 const NodemonPlugin = require( 'nodemon-webpack-plugin' )
 const nodeExternals = require('webpack-node-externals')
+var pathToPhaser = path.join(__dirname, '/node_modules/phaser/');
+var phaser = path.join(pathToPhaser, 'dist/phaser.js');
 
 module.exports = [
     {
         mode: "development",
         devtool: "inline-source-map",
-        entry: "./server/index.ts",
+        entry: "./src/server/index.ts",
         output: {
             filename: "./server/bundle.js"
         },
@@ -28,19 +31,24 @@ module.exports = [
     {
         mode: "development",
         devtool: "inline-source-map",
-        entry: "./client/index.ts",
+        entry: "./src/client/index.ts",
         output: {
             filename: "./client/js/bundle.js"
         },
         resolve: {
             // Add `.ts` and `.tsx` as a resolvable extension.
-            extensions: [".ts", ".tsx", ".js"]
+            extensions: [".ts", ".tsx", ".js", '.json'],
+            alias: {
+                phaser: phaser
+            }
         },
         module: {
             rules: [
             // all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`
-            { test: /\.tsx?$/, loader: "ts-loader" }
+            { test: /\.tsx?$/, loader: "ts-loader" },
+            { test: /phaser\.js$/, loader: 'expose-loader?Phaser' },
+            {test: /\.json$/, loader: "json"}
             ]
-        }
+        },
     }
 ]

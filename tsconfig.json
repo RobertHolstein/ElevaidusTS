@@ -4,10 +4,10 @@
       "outDir": "dist/",
       "noImplicitAny": true,
       "removeComments": true,
-      "preserveConstEnums": true
+      "preserveConstEnums": true,
     },
     "include": [
-      "./server/*"
+      "./src/server/*"
     ],
     "exclude": [
         "node_modules",
