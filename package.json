@@ -22,6 +22,7 @@
     "@types/node": "^10.9.4",
     "@types/socket.io": "^1.4.38",
     "@types/socket.io-client": "^1.4.32",
+    "copy-webpack-plugin": "^4.5.2",
     "expose-loader": "^0.7.5",
     "nodemon": "^1.18.4",
     "nodemon-webpack-plugin": "^4.0.3",

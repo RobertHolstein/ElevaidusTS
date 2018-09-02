@@ -1,8 +1,9 @@
-var path = require('path');
+const path = require('path');
 const NodemonPlugin = require( 'nodemon-webpack-plugin' )
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 const nodeExternals = require('webpack-node-externals')
-var pathToPhaser = path.join(__dirname, '/node_modules/phaser/');
-var phaser = path.join(pathToPhaser, 'dist/phaser.js');
+const pathToPhaser = path.join(__dirname, '/node_modules/phaser/');
+const phaser = path.join(pathToPhaser, 'dist/phaser.js');
 
 module.exports = [
     {
@@ -47,8 +48,20 @@ module.exports = [
             // all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`
             { test: /\.tsx?$/, loader: "ts-loader" },
             { test: /phaser\.js$/, loader: 'expose-loader?Phaser' },
-            {test: /\.json$/, loader: "json"}
+            
             ]
         },
+        plugins: [
+            new CopyWebpackPlugin([{
+                // context: './dist/client/src/client/',
+                from:  __dirname + '/src/client/*.html',
+                 to:  'client/index.html'
+            },
+            {
+                from:  __dirname + '/src/client/assets/',
+                 to:  'client/assets/'
+            }
+        ])
+        ]
     }
 ]

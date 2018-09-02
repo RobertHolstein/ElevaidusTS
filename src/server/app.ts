@@ -5,7 +5,8 @@ import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
 import * as path from 'path';
-import * as CONSTANTS from './Constants/constants';
+import * as CONSTANTS from './constants/constants';
+import { Player } from './objects/Player'
 
 
 export class App {
@@ -68,10 +69,29 @@ export class App {
                 this.io.emit('messageFromBackend', 'Hello from the backend!');
             });
 
+            socket.on('signIn', (signInInfo) => {
+                // TODO: compare sign in info with DB
+                console.log(`\n\n===============>\t Player logging in\n`)
+                console.log(`===============>\t username: ${signInInfo.username}\n`)
+                console.log(`===============>\t password: ${signInInfo.password}\n`)
+                this.CreatePlayer(socket, true, 1);
+            })
+            
+            // TODO: login --> create new player or grab existing player from DB
+            this.CreatePlayer(socket, true, 1);
             socket.on('disconnect', () => {
             console.log(`\n\n===============>\t client disconnected\n`);
             });
         });
+    }
+
+    private CreatePlayer(socket: socketIo.EngineSocket, isNew: boolean, id: number): void {
+        let playerInfo = {
+            isNew: isNew,
+            id: id
+        }
+        let player = new Player(this.io, socket, this.db, playerInfo);
+        socket.emit('signedIn', {skills: player.skills})
     }
 
     private dbConnect(): void {
