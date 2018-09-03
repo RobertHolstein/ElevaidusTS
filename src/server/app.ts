@@ -69,29 +69,55 @@ export class App {
                 this.io.emit('messageFromBackend', 'Hello from the backend!');
             });
 
-            socket.on('signIn', (signInInfo) => {
-                // TODO: compare sign in info with DB
-                console.log(`\n\n===============>\t Player logging in\n`)
-                console.log(`===============>\t username: ${signInInfo.username}\n`)
-                console.log(`===============>\t password: ${signInInfo.password}\n`)
-                this.CreatePlayer(socket, true, 1);
+            socket.on('signIn', (signInInfo: any) => {
+                let sql = 'SELECT * FROM player WHERE username = ? AND password = ?';
+                var query = this.db.query(sql, [signInInfo.username,signInInfo.password], (err, res) => {
+                    if (err) {
+                        console.log(err);
+                        socket.emit('errorFromBackend', err.code);                        
+                    }else if(res.length === 0){
+                        socket.emit('errorFromBackend', 'username and or password was incorrect');                 
+                    }else{
+                        // TODO: compare sign in info with DB
+                        console.log(`\n\n===============>\t Player logging in\n`)
+                        console.log(`===============>\t username: ${signInInfo.username}\n`)
+                        console.log(`===============>\t password: ${signInInfo.password}\n`)
+                        this.CreatePlayer(socket, { player: res[0], isNew: false });
+                    }
+                })
+            })
+
+            socket.on('signUp', (signUpInfo) => {
+                let postPlayer = { username: signUpInfo.username, password: signUpInfo.password}
+                let sql = 'INSERT INTO player SET ?';
+                let query = this.db.query(sql, postPlayer, (err, res) => {
+                    if(err){
+                        console.log(err);
+                        if(err.code === 'ER_DUP_ENTRY'){
+                            socket.emit('errorFromBackend', 'this username is already in use');
+                        }else{
+                            socket.emit('errorFromBackend', err.code);
+                        }
+                    }else{
+                        let player = this.CreatePlayer(socket, {player: {id:res.insertId}, isNew: true});
+                    }
+                }) 
             })
             
             // TODO: login --> create new player or grab existing player from DB
-            this.CreatePlayer(socket, true, 1);
             socket.on('disconnect', () => {
             console.log(`\n\n===============>\t client disconnected\n`);
             });
         });
     }
 
-    private CreatePlayer(socket: socketIo.EngineSocket, isNew: boolean, id: number): void {
-        let playerInfo = {
-            isNew: isNew,
-            id: id
-        }
+    private CreatePlayer(socket: socketIo.EngineSocket, playerInfo: any): void {
         let player = new Player(this.io, socket, this.db, playerInfo);
-        socket.emit('signedIn', {skills: player.skills})
+        if(playerInfo.isNew){
+            socket.emit('signedUp', {id: player.id, skills: player.skills, class: player.class});
+        }else{
+            socket.emit('signedIn', {id: player.id, skills: player.skills, class: player.class});
+        }
     }
 
     private dbConnect(): void {
@@ -115,7 +141,7 @@ export class App {
                                 throw err
                             }else {
                                 console.log(`\n\n===============>\t ${CONSTANTS.DATABASE} database connected\n`);
-                                sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, email VARCHAR(255), username VARCHAR(30), password VARCHAR(255), PRIMARY KEY (id), UNIQUE KEY email (email))"
+                                sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), class VARCHAR(30), farming int, mining int, fighting int, healing int, PRIMARY KEY (id), UNIQUE KEY username (username))"
                                 db.query(sql, (err, result) => {
                                     if (err) {
                                         throw err
@@ -123,13 +149,12 @@ export class App {
                                         console.log(`\n\n===============>\t ${CONSTANTS.DATABASE} database tables check\n`);
                                     }
                                 });
+                                this.db = db;
                             }
                         }); 
                     }
                 })
             }
         });
-        this.db = db;
     }
-
 }

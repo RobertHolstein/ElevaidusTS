@@ -34,34 +34,53 @@ const config: GameConfig = {
 
 
 export class ioService {
-    private socket: SocketIOClient.Socket;
-  
-    constructor() {
-      this.socket = io.connect();
-    }
-  
-    // EMITTER
-    sendMessage(msg: string) {
-      this.socket.emit('messageFromFrontend', msg );
-      this.socket.on('messageFromBackend', (m: string) => {
-        console.log(`\n\n===============>\t ${m}\n`);
-        });
-    }
+  private socket: SocketIOClient.Socket;
 
-    SignIn(): void {
-      this.socket.emit('signIn', {username: signInUsername.value, password: signInPassword.value })
-      this.socket.on('signedIn', (info: any) => {
-        var game = new Phaser.Game(config);
-        signInDiv.hidden = true;
-        console.log(info)
-      })
-    }
+  constructor() {
+    this.socket = io.connect();
+    this.sendMessage('hello from the frontend!');
+  }
+
+  // EMITTER
+  private sendMessage(msg: string) {
+    this.socket.emit('messageFromFrontend', msg );
+    this.socket.on('messageFromBackend', (m: string) => {
+      console.log(`\n\n===============>\t ${m}\n`);
+      });
+  }
+
+  public SignIn(): void {
+    this.socket.emit('signIn', {username: signInUsername.value, password: signInPassword.value })
+    this.socket.on('signedIn', (playerInfo: any) => {
+      this.CreateGame(playerInfo);
+    })
+    this.socket.on('errorFromBackend', (err: string) => {
+      alert(err);
+    })
+  }
   
+  public SignUp(): void {
+    this.socket.emit('signUp', {username: signInUsername.value, password: signInPassword.value })
+    this.socket.on('signedUp', (playerInfo: any) => {
+      this.CreateGame(playerInfo)
+    })
+    this.socket.on('errorFromBackend', (err: string) => {
+      alert(err);
+    })
+  }
+  
+  private CreateGame(playerInfo: any): void{
+    signInDiv.hidden = true;
+    var game = new Phaser.Game(config);
+    console.log(playerInfo)
+  }
 }
 
 var socket = new ioService();
-socket.sendMessage('hello from the frontend!');
 
 signInBtn.onclick = () => {
   socket.SignIn();
+}
+signUpBtn.onclick = () => {
+  socket.SignUp();
 }

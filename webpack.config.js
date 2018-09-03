@@ -8,7 +8,7 @@ const phaser = path.join(pathToPhaser, 'dist/phaser.js');
 module.exports = [
     {
         mode: "development",
-        devtool: "inline-source-map",
+        devtool: "source-map",
         entry: "./src/server/index.ts",
         output: {
             filename: "./server/bundle.js"
