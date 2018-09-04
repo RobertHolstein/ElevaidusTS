@@ -1,11 +1,12 @@
 console.log("\n\n===============>\t app starting\n");
+import { SHARED } from "../shared/const";
+import { CONST } from './const/const';
 
 import * as mysql from 'mysql';
 import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
 import * as path from 'path';
-import * as CONSTANTS from './constants/constants';
 import { Player } from './objects/Player'
 
 
@@ -16,10 +17,11 @@ export class App {
     public io: SocketIO.Server;
     private port: string | number;
     public db: mysql.Connection;
+    public zones: any[][];
     private dbConfig = {
-        host        : CONSTANTS.HOST,
-        user        : CONSTANTS.USER,
-        password    : CONSTANTS.DBPASSWORD,
+        host        : CONST.HOST,
+        user        : CONST.USER,
+        password    : CONST.DBPASSWORD,
         database    : ''
     };
 
@@ -30,6 +32,7 @@ export class App {
         this.Routes();
         this.sockets();
         this.listen();
+        this.CreateZones();
         this.dbConnect();
     }
 
@@ -57,6 +60,18 @@ export class App {
         this.io = socketIo.listen(this.server);;
     }
 
+    private CreateZones(): void {
+        this.zones = [];
+        for (let i = 0; i < SHARED.ZONELTRS.length; i++) {
+            this.zones[i]  = []
+            for (let j = 1; j < 6; j++) {
+                this.zones[i][j] = {name: `${SHARED.ZONELTRS[i]}${j.toString()}`};
+            }
+            
+        }
+        // TODO: add more propties in zones
+    }
+
     private listen(): void {
         this.server.listen(this.port, () => {
             console.log(`\n\n===============>\t running server on port ${this.port}\n`);
@@ -78,7 +93,6 @@ export class App {
                     }else if(res.length === 0){
                         socket.emit('errorFromBackend', 'username and or password was incorrect');                 
                     }else{
-                        // TODO: compare sign in info with DB
                         console.log(`\n\n===============>\t Player logging in\n`)
                         console.log(`===============>\t username: ${signInInfo.username}\n`)
                         console.log(`===============>\t password: ${signInInfo.password}\n`)
@@ -104,7 +118,6 @@ export class App {
                 }) 
             })
             
-            // TODO: login --> create new player or grab existing player from DB
             socket.on('disconnect', () => {
             console.log(`\n\n===============>\t client disconnected\n`);
             });
@@ -113,11 +126,6 @@ export class App {
 
     private CreatePlayer(socket: socketIo.EngineSocket, playerInfo: any): void {
         let player = new Player(this.io, socket, this.db, playerInfo);
-        if(playerInfo.isNew){
-            socket.emit('signedUp', {id: player.id, skills: player.skills, class: player.class});
-        }else{
-            socket.emit('signedIn', {id: player.id, skills: player.skills, class: player.class});
-        }
     }
 
     private dbConnect(): void {
@@ -134,19 +142,19 @@ export class App {
                     }else {
                         console.log(`\n\n===============>\t database check\n`);
                         db.end();
-                        this.dbConfig.database = CONSTANTS.DATABASE;
+                        this.dbConfig.database = CONST.DATABASE;
                         db = mysql.createConnection(this.dbConfig);
                         db.connect((err) => {
                             if (err) {
                                 throw err
                             }else {
-                                console.log(`\n\n===============>\t ${CONSTANTS.DATABASE} database connected\n`);
-                                sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), class VARCHAR(30), farming int, mining int, fighting int, healing int, PRIMARY KEY (id), UNIQUE KEY username (username))"
+                                console.log(`\n\n===============>\t ${CONST.DATABASE} database connected\n`);
+                                sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, PRIMARY KEY (id), UNIQUE KEY username (username))"
                                 db.query(sql, (err, result) => {
                                     if (err) {
                                         throw err
                                     }else {
-                                        console.log(`\n\n===============>\t ${CONSTANTS.DATABASE} database tables check\n`);
+                                        console.log(`\n\n===============>\t ${CONST.DATABASE} database tables check\n`);
                                     }
                                 });
                                 this.db = db;
