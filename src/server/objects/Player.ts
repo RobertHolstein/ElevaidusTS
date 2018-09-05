@@ -85,7 +85,6 @@ export class Player {
     }
 
     private saveInDatabase(): void {
-        this.db.connect();
         let sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ? WHERE id = ?';
         this.db.query(sql, 
             [
@@ -104,7 +103,6 @@ export class Player {
                 }else{
                     console.log(`\n\n===============>\t Player ${this.id} updated in database \n`);
                 }
-                this.db.end();
             }
         )
     }
