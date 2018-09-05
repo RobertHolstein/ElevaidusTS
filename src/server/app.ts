@@ -16,7 +16,7 @@ export class App {
     private server: Server;
     public io: SocketIO.Server;
     private port: string | number;
-    public db: mysql.Connection;
+    public db: mysql.Pool;
     public zones: any[][];
     private dbConfig = {
         host        : CONST.HOST,
@@ -129,8 +129,8 @@ export class App {
     }
 
     private dbConnect(): void {
-        var db = mysql.createConnection(this.dbConfig);
-        db.connect((err) => {
+        var db = mysql.createPool(this.dbConfig);
+        db.getConnection((err) => {
             if (err) {
                 throw err
             }else {
@@ -148,11 +148,12 @@ export class App {
         });
 
         db.on('error', (err) => {
-            if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
-                var db = mysql.createConnection(this.dbConfig);
+            if(err.code === 'PROTOCOL_CONNECTION_LOST') {
+                console.log(`\n\n===============>\t ${CONST.DATABASE} database tables check\n`);
+                var db = mysql.createPool(this.dbConfig);
                 this.db = db;
-              } else {                                      // connnection idle timeout (the wait_timeout
-                throw err;                                  // server variable configures this)
+              } else {
+                throw err;
               }
         })
         // db.connect((err) => {

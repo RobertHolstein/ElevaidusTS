@@ -209,8 +209,8 @@ var App = (function () {
     };
     App.prototype.dbConnect = function () {
         var _this = this;
-        var db = mysql.createConnection(this.dbConfig);
-        db.connect(function (err) {
+        var db = mysql.createPool(this.dbConfig);
+        db.getConnection(function (err) {
             if (err) {
                 throw err;
             }
@@ -230,7 +230,8 @@ var App = (function () {
         });
         db.on('error', function (err) {
             if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-                var db = mysql.createConnection(_this.dbConfig);
+                console.log("\n\n===============>\t " + const_2.CONST.DATABASE + " database tables check\n");
+                var db = mysql.createPool(_this.dbConfig);
                 _this.db = db;
             }
             else {

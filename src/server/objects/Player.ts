@@ -8,14 +8,14 @@ const playerClasses: Array<PlayerClass> = new Array<PlayerClass>();
 export class Player {
     private io: SocketIO.Server;
     private socket: SocketIO.EngineSocket;
-    private db: mysql.Connection;
+    private db: mysql.Pool;
     public class: string;
     public skills: Skill[]; 
     public id: number;
     public zone: string;
     public health: number;
 
-    constructor(io: SocketIO.Server, socket: SocketIO.EngineSocket, db: mysql.Connection, playerInfo: any){
+    constructor(io: SocketIO.Server, socket: SocketIO.EngineSocket, db: mysql.Pool, playerInfo: any){
        this.io = io;
        this.socket = socket;
        this.db = db;
