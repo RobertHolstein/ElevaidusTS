@@ -20,7 +20,7 @@ export class App {
     public zones: any[][];
     private dbConfig = {
         host        : CONST.HOST,
-        user        : CONST.USER,
+        user        : CONST.DBUSER,
         password    : CONST.DBPASSWORD,
         database    : ''
     };
@@ -130,39 +130,40 @@ export class App {
 
     private dbConnect(): void {
         var db = mysql.createConnection(this.dbConfig);
+        this.dbConfig.database = CONST.DATABASE;
+        db = mysql.createConnection(this.dbConfig);
         db.connect((err) => {
             if (err) {
                 throw err
             }else {
-                console.log(`\n\n===============>\t mySQL connected\n`);
-                let sql = 'CREATE DATABASE IF NOT EXISTS elevaidus';
+                console.log(`\n\n===============>\t ${CONST.DATABASE} database connected\n`);
+                let sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, PRIMARY KEY (id), UNIQUE KEY username (username))"
                 db.query(sql, (err, result) => {
                     if (err) {
                         throw err
                     }else {
-                        console.log(`\n\n===============>\t database check\n`);
-                        db.end();
-                        this.dbConfig.database = CONST.DATABASE;
-                        db = mysql.createConnection(this.dbConfig);
-                        db.connect((err) => {
-                            if (err) {
-                                throw err
-                            }else {
-                                console.log(`\n\n===============>\t ${CONST.DATABASE} database connected\n`);
-                                sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, PRIMARY KEY (id), UNIQUE KEY username (username))"
-                                db.query(sql, (err, result) => {
-                                    if (err) {
-                                        throw err
-                                    }else {
-                                        console.log(`\n\n===============>\t ${CONST.DATABASE} database tables check\n`);
-                                    }
-                                });
-                                this.db = db;
-                            }
-                        }); 
+                        console.log(`\n\n===============>\t ${CONST.DATABASE} database tables check\n`);
                     }
-                })
+                });
+                this.db = db;
             }
-        });
+        }); 
+        // db.connect((err) => {
+        //     if (err) {
+        //         throw err
+        //     }else {
+        //         console.log(`\n\n===============>\t mySQL connected\n`);
+        //         let sql = 'CREATE DATABASE IF NOT EXISTS elevaidus';
+        //         db.query(sql, (err, result) => {
+        //             if (err) {
+        //                 throw err
+        //             }else {
+        //                 console.log(`\n\n===============>\t database check\n`);
+        //                 db.end();
+                        
+        //             }
+        //         })
+        //     }
+        // });
     }
 }

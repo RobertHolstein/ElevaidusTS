@@ -109,7 +109,7 @@ var App = (function () {
     function App() {
         this.dbConfig = {
             host: const_2.CONST.HOST,
-            user: const_2.CONST.USER,
+            user: const_2.CONST.DBUSER,
             password: const_2.CONST.DBPASSWORD,
             database: ''
         };
@@ -210,42 +210,24 @@ var App = (function () {
     App.prototype.dbConnect = function () {
         var _this = this;
         var db = mysql.createConnection(this.dbConfig);
+        this.dbConfig.database = const_2.CONST.DATABASE;
+        db = mysql.createConnection(this.dbConfig);
         db.connect(function (err) {
             if (err) {
                 throw err;
             }
             else {
-                console.log("\n\n===============>\t mySQL connected\n");
-                var sql_1 = 'CREATE DATABASE IF NOT EXISTS elevaidus';
-                db.query(sql_1, function (err, result) {
+                console.log("\n\n===============>\t " + const_2.CONST.DATABASE + " database connected\n");
+                var sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, PRIMARY KEY (id), UNIQUE KEY username (username))";
+                db.query(sql, function (err, result) {
                     if (err) {
                         throw err;
                     }
                     else {
-                        console.log("\n\n===============>\t database check\n");
-                        db.end();
-                        _this.dbConfig.database = const_2.CONST.DATABASE;
-                        db = mysql.createConnection(_this.dbConfig);
-                        db.connect(function (err) {
-                            if (err) {
-                                throw err;
-                            }
-                            else {
-                                console.log("\n\n===============>\t " + const_2.CONST.DATABASE + " database connected\n");
-                                sql_1 = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, PRIMARY KEY (id), UNIQUE KEY username (username))";
-                                db.query(sql_1, function (err, result) {
-                                    if (err) {
-                                        throw err;
-                                    }
-                                    else {
-                                        console.log("\n\n===============>\t " + const_2.CONST.DATABASE + " database tables check\n");
-                                    }
-                                });
-                                _this.db = db;
-                            }
-                        });
+                        console.log("\n\n===============>\t " + const_2.CONST.DATABASE + " database tables check\n");
                     }
                 });
+                _this.db = db;
             }
         });
     };
@@ -268,10 +250,10 @@ exports.App = App;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CONST = {
-    HOST: 'localhost',
-    USER: 'elevaidus',
-    DBPASSWORD: 'mysqlP@$$w0rd',
-    DATABASE: 'elevaidus',
+    HOST: 'us-cdbr-iron-east-01.cleardb.net',
+    DBUSER: 'b07173e9b72118',
+    DBPASSWORD: '45517a09',
+    DATABASE: 'heroku_4d115db42117719',
     STARTINGZONE: 'a1',
     STARTINGHEALTH: 100,
     SKILLS: [

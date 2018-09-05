@@ -1,9 +1,10 @@
 export let CONST = {
     // mySQL database settings
-    HOST: 'localhost',
-    USER: 'elevaidus',
-    DBPASSWORD: 'mysqlP@$$w0rd',
-    DATABASE: 'elevaidus',
+    // mysql://b07173e9b72118:45517a09@us-cdbr-iron-east-01.cleardb.net/heroku_4d115db42117719?reconnect=true
+    HOST: 'us-cdbr-iron-east-01.cleardb.net', //'localhost',
+    DBUSER:  'b07173e9b72118', //'elevaidus',
+    DBPASSWORD: '45517a09', //'mysqlP@$$w0rd',
+    DATABASE: 'heroku_4d115db42117719', //'elevaidus',
 
     // player settings
     STARTINGZONE: 'a1',
