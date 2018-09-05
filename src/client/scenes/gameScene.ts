@@ -50,6 +50,9 @@ export class GameScene extends Phaser.Scene {
             label.setText(gameObject.name);
             label.x = gameObject.x;
             label.y = gameObject.y;
+            menu.fillRect(gameObject.x,gameObject.y,SHARED.ZONESIZE,SHARED.ZONESIZE/3);
+            menu.fillRect(gameObject.x, gameObject.y + 2 * SHARED.ZONESIZE/3,SHARED.ZONESIZE,SHARED.ZONESIZE/3);
+
             this.player.setPosition(gameObject.x + SHARED.ZONESIZE/2, gameObject.y + SHARED.ZONESIZE/2)
         })
     }

@@ -4,6 +4,7 @@
   "description": "",
   "main": "./dist/server/bundle.js",
   "scripts": {
+    "start": "node ./dist/server/bundle.js",
     "dev": "webpack -w",
     "watch": ""
   },
