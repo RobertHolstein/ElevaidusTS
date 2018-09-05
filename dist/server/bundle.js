@@ -230,7 +230,8 @@ var App = (function () {
         });
         db.on('error', function (err) {
             if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-                db.connect();
+                var db = mysql.createConnection(_this.dbConfig);
+                _this.db = db;
             }
             else {
                 throw err;
@@ -371,7 +372,6 @@ var Player = (function () {
     };
     Player.prototype.saveInDatabase = function () {
         var _this = this;
-        this.db.connect();
         var sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ? WHERE id = ?';
         this.db.query(sql, [
             this.zone,
@@ -389,7 +389,6 @@ var Player = (function () {
             else {
                 console.log("\n\n===============>\t Player " + _this.id + " updated in database \n");
             }
-            _this.db.end();
         });
     };
     Player.prototype.PlayerUpdate = function (data) {

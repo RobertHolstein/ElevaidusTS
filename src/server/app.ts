@@ -149,7 +149,8 @@ export class App {
 
         db.on('error', (err) => {
             if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
-                db.connect();
+                var db = mysql.createConnection(this.dbConfig);
+                this.db = db;
               } else {                                      // connnection idle timeout (the wait_timeout
                 throw err;                                  // server variable configures this)
               }
