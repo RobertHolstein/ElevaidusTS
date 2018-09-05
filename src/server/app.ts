@@ -22,7 +22,7 @@ export class App {
         host        : CONST.HOST,
         user        : CONST.DBUSER,
         password    : CONST.DBPASSWORD,
-        database    : ''
+        database    : CONST.DATABASE
     };
 
     constructor() {
@@ -130,8 +130,6 @@ export class App {
 
     private dbConnect(): void {
         var db = mysql.createConnection(this.dbConfig);
-        this.dbConfig.database = CONST.DATABASE;
-        db = mysql.createConnection(this.dbConfig);
         db.connect((err) => {
             if (err) {
                 throw err
@@ -147,7 +145,15 @@ export class App {
                 });
                 this.db = db;
             }
-        }); 
+        });
+
+        db.on('error', (err) => {
+            if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
+                var db = mysql.createConnection(this.dbConfig);
+              } else {                                      // connnection idle timeout (the wait_timeout
+                throw err;                                  // server variable configures this)
+              }
+        })
         // db.connect((err) => {
         //     if (err) {
         //         throw err

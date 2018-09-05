@@ -111,7 +111,7 @@ var App = (function () {
             host: const_2.CONST.HOST,
             user: const_2.CONST.DBUSER,
             password: const_2.CONST.DBPASSWORD,
-            database: ''
+            database: const_2.CONST.DATABASE
         };
         this.createApp();
         this.config();
@@ -210,8 +210,6 @@ var App = (function () {
     App.prototype.dbConnect = function () {
         var _this = this;
         var db = mysql.createConnection(this.dbConfig);
-        this.dbConfig.database = const_2.CONST.DATABASE;
-        db = mysql.createConnection(this.dbConfig);
         db.connect(function (err) {
             if (err) {
                 throw err;
@@ -228,6 +226,14 @@ var App = (function () {
                     }
                 });
                 _this.db = db;
+            }
+        });
+        db.on('error', function (err) {
+            if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+                var db = mysql.createConnection(_this.dbConfig);
+            }
+            else {
+                throw err;
             }
         });
     };
