@@ -102,18 +102,28 @@ export class App {
             })
 
             socket.on('signUp', (signUpInfo) => {
-                let postPlayer = { username: signUpInfo.username, password: signUpInfo.password}
-                let sql = 'INSERT INTO player SET ?';
-                let query = this.db.query(sql, postPlayer, (err, res) => {
+                if(!signUpInfo.username || !signUpInfo.password){
+                    let error = "no username and or password given";
+                    console.log(error);
+                    socket.emit('errorFromBackend', error);
+                    return;         
+                }
+                let sql = 'SELECT * FROM player WHERE username = ? AND password = ?';
+                let query = this.db.query(sql, [signUpInfo.username, signUpInfo.password], (err, res) => {
                     if(err){
                         console.log(err);
-                        if(err.code === 'ER_DUP_ENTRY'){
-                            socket.emit('errorFromBackend', 'this username is already in use');
-                        }else{
-                            socket.emit('errorFromBackend', err.code);
-                        }
+                        socket.emit('errorFromBackend', err.code);
+                    }else if(res.length !== 0){
+                        socket.emit('errorFromBackend', 'this username is already in use');
                     }else{
-                        let player = this.CreatePlayer(socket, {player: {id:res.insertId}, isNew: true});
+                        sql = 'INSERT INTO player SET ?';
+                        let query = this.db.query(sql, {username:signUpInfo.username, password:signUpInfo.password}, (err, res) => {
+                            if(err){
+                                console.log(err);
+                            }else{
+                                let player = this.CreatePlayer(socket, {player: {id:res.insertId}, isNew: true});
+                            }
+                        });
                     }
                 }) 
             })
@@ -135,7 +145,7 @@ export class App {
                 throw err
             }else {
                 console.log(`\n\n===============>\t ${CONST.DATABASE} database connected\n`);
-                let sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, PRIMARY KEY (id), UNIQUE KEY username (username))"
+                let sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, crafting int, PRIMARY KEY (id), UNIQUE KEY username (username))"
                 db.query(sql, (err, result) => {
                     if (err) {
                         throw err

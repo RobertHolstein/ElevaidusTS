@@ -182,20 +182,31 @@ var App = (function () {
                 });
             });
             socket.on('signUp', function (signUpInfo) {
-                var postPlayer = { username: signUpInfo.username, password: signUpInfo.password };
-                var sql = 'INSERT INTO player SET ?';
-                var query = _this.db.query(sql, postPlayer, function (err, res) {
+                if (!signUpInfo.username || !signUpInfo.password) {
+                    var error = "no username and or password given";
+                    console.log(error);
+                    socket.emit('errorFromBackend', error);
+                    return;
+                }
+                var sql = 'SELECT * FROM player WHERE username = ? AND password = ?';
+                var query = _this.db.query(sql, [signUpInfo.username, signUpInfo.password], function (err, res) {
                     if (err) {
                         console.log(err);
-                        if (err.code === 'ER_DUP_ENTRY') {
-                            socket.emit('errorFromBackend', 'this username is already in use');
-                        }
-                        else {
-                            socket.emit('errorFromBackend', err.code);
-                        }
+                        socket.emit('errorFromBackend', err.code);
+                    }
+                    else if (res.length !== 0) {
+                        socket.emit('errorFromBackend', 'this username is already in use');
                     }
                     else {
-                        var player = _this.CreatePlayer(socket, { player: { id: res.insertId }, isNew: true });
+                        sql = 'INSERT INTO player SET ?';
+                        var query_1 = _this.db.query(sql, { username: signUpInfo.username, password: signUpInfo.password }, function (err, res) {
+                            if (err) {
+                                console.log(err);
+                            }
+                            else {
+                                var player = _this.CreatePlayer(socket, { player: { id: res.insertId }, isNew: true });
+                            }
+                        });
                     }
                 });
             });
@@ -216,7 +227,7 @@ var App = (function () {
             }
             else {
                 console.log("\n\n===============>\t " + const_2.CONST.DATABASE + " database connected\n");
-                var sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, PRIMARY KEY (id), UNIQUE KEY username (username))";
+                var sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, crafting int, PRIMARY KEY (id), UNIQUE KEY username (username))";
                 db.query(sql, function (err, result) {
                     if (err) {
                         throw err;
@@ -264,11 +275,13 @@ exports.CONST = {
     DATABASE: 'heroku_4d115db42117719',
     STARTINGZONE: 'a1',
     STARTINGHEALTH: 100,
-    SKILLS: [
-        'farming',
-        'mining',
-        'healing',
-        'fighting'
+    SKILLS: ['farming', 'mining', 'healing', 'fighting', 'crafting'],
+    PLAYERCLASSES: [
+        { name: 'knight', farming: 0, mining: 0, healing: 5, fighting: 25, crafting: 0 },
+        { name: 'farmer', farming: 25, mining: 0, healing: 5, fighting: 0, crafting: 0 },
+        { name: 'miner', farming: 5, mining: 20, healing: 0, fighting: 5, crafting: 0 },
+        { name: 'priest', farming: 5, mining: 0, healing: 25, fighting: 0, crafting: 5 },
+        { name: 'craftsmen', farming: 0, mining: 5, healing: 0, fighting: 0, crafting: 25 }
     ]
 };
 
@@ -303,14 +316,17 @@ var app = new app_1.App();
 Object.defineProperty(exports, "__esModule", { value: true });
 var const_1 = __webpack_require__(/*! ../const/const */ "./src/server/const/const.ts");
 var Skill_1 = __webpack_require__(/*! ./Skill */ "./src/server/objects/Skill.ts");
+var PlayerClass_1 = __webpack_require__(/*! ./PlayerClass */ "./src/server/objects/PlayerClass.ts");
 var playerClasses = new Array();
 var Player = (function () {
     function Player(io, socket, db, playerInfo) {
         this.io = io;
         this.socket = socket;
         this.db = db;
-        this.skills = Skill_1.GetSkills();
         this.id = playerInfo.player.id;
+        this.username = playerInfo.player.username;
+        this.skills = Skill_1.GetSkills();
+        this.playerClasses = PlayerClass_1.GetPlayerClasses();
         if (playerInfo.isNew) {
             this.CreateNewPlayer();
         }
@@ -323,9 +339,7 @@ var Player = (function () {
         this.class = playerInfo.class;
         this.zone = playerInfo.zone;
         this.health = playerInfo.health;
-        this.socket.emit('signedIn', {
-            id: this.id, skills: this.skills, class: this.class, zone: this.zone, health: this.health
-        });
+        this.socket.emit('signedIn', this.FrontendPlayerInfo());
     };
     Player.prototype.CreateNewPlayer = function () {
         this.GenerateClass();
@@ -333,19 +347,28 @@ var Player = (function () {
         this.zone = const_1.CONST.STARTINGZONE;
         this.health = const_1.CONST.STARTINGHEALTH;
         this.saveInDatabase();
-        this.socket.emit('signedUp', {
-            id: this.id, skills: this.skills, class: this.class, zone: this.zone, health: this.health
-        });
+        this.socket.emit('signedUp', this.FrontendPlayerInfo());
+    };
+    Player.prototype.FrontendPlayerInfo = function () {
+        var player = {
+            id: this.id,
+            username: this.username,
+            skills: this.skills,
+            class: this.class,
+            zone: this.zone,
+            health: this.health
+        };
+        return player;
     };
     Player.prototype.GenerateClass = function () {
-        var randomNumber = Math.floor(Math.random() * playerClasses.length);
-        this.class = playerClasses[randomNumber].name;
+        var randomNumber = Math.floor(Math.random() * this.playerClasses.length);
+        this.class = this.playerClasses[randomNumber].name;
     };
     ;
     Player.prototype.GenerateSkills = function () {
         var _this = this;
         this.GenerateRandomSkills();
-        var thisPlayerClass = playerClasses.find(function (i) { return i.name === _this.class; });
+        var thisPlayerClass = this.playerClasses.find(function (i) { return i.name === _this.class; });
         thisPlayerClass.skills.forEach(function (i) {
             var skill = _this.skills.find(function (j) { return j.name === i.name; });
             if (skill === undefined) {
@@ -355,16 +378,15 @@ var Player = (function () {
         });
     };
     Player.prototype.SetSkills = function (playerInfo) {
-        var _loop_1 = function (i) {
-            this_1.skills.forEach(function (skill) {
-                if (i === skill.name) {
+        for (var s = 0; s < this.skills.length; s++) {
+            for (var prop in playerInfo) {
+                if (prop === this.skills[s].name) {
+                    this.skills[s].level = playerInfo[prop];
+                    break;
                 }
-            });
-        };
-        var this_1 = this;
-        for (var i in playerInfo) {
-            _loop_1(i);
+            }
         }
+        ;
     };
     Player.prototype.GenerateRandomSkills = function () {
         this.skills.forEach(function (i) {
@@ -373,7 +395,7 @@ var Player = (function () {
     };
     Player.prototype.saveInDatabase = function () {
         var _this = this;
-        var sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ? WHERE id = ?';
+        var sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ?, crafting = ? WHERE id = ?';
         this.db.query(sql, [
             this.zone,
             this.health,
@@ -382,6 +404,7 @@ var Player = (function () {
             this.skills.find(function (i) { return i.name === 'mining'; }).level,
             this.skills.find(function (i) { return i.name === 'healing'; }).level,
             this.skills.find(function (i) { return i.name === 'fighting'; }).level,
+            this.skills.find(function (i) { return i.name === 'crafting'; }).level,
             this.id
         ], function (err, res) {
             if (err) {
@@ -397,6 +420,21 @@ var Player = (function () {
     return Player;
 }());
 exports.Player = Player;
+
+
+/***/ }),
+
+/***/ "./src/server/objects/PlayerClass.ts":
+/*!*******************************************!*\
+  !*** ./src/server/objects/PlayerClass.ts ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var const_1 = __webpack_require__(/*! ../const/const */ "./src/server/const/const.ts");
 var PlayerClass = (function () {
     function PlayerClass(name, skills) {
         this.name = name;
@@ -404,10 +442,21 @@ var PlayerClass = (function () {
     }
     return PlayerClass;
 }());
-playerClasses.push(new PlayerClass("miner", [{ name: 'mining', level: 25, progress: 0 }, { name: 'fighting', level: 5, progress: 0 }]));
-playerClasses.push(new PlayerClass("farmer", [{ name: 'farming', level: 25, progress: 0 }, { name: 'healing', level: 5, progress: 0 }]));
-playerClasses.push(new PlayerClass("priest", [{ name: 'healing', level: 25, progress: 0 }, { name: 'farming', level: 5, progress: 0 }]));
-playerClasses.push(new PlayerClass("fighter", [{ name: 'fighting', level: 25, progress: 0 }, { name: 'healing', level: 5, progress: 0 }]));
+exports.PlayerClass = PlayerClass;
+function GetPlayerClasses() {
+    var playerClasses = new Array();
+    const_1.CONST.PLAYERCLASSES.forEach(function (pClass) {
+        playerClasses.push(new PlayerClass(pClass.name, [
+            { name: 'farming', level: pClass.farming, progress: 0 },
+            { name: 'mining', level: pClass.mining, progress: 0 },
+            { name: 'healing', level: pClass.healing, progress: 0 },
+            { name: 'fighting', level: pClass.fighting, progress: 0 },
+            { name: 'crafting', level: pClass.crafting, progress: 0 },
+        ]));
+    });
+    return playerClasses;
+}
+exports.GetPlayerClasses = GetPlayerClasses;
 
 
 /***/ }),
@@ -456,8 +505,24 @@ exports.GetSkills = GetSkills;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SHARED = {
     ZONELTRS: ['a', 'b', 'c', 'd', 'e'],
+    ZONES: ['a1', 'a2', 'a3', 'a4', 'a5', 'b1', 'b2', 'b3', 'b4', 'b5', 'c1', 'c2', 'c3', 'c4', 'c5', 'd1', 'd2', 'd3', 'd4', 'd5', 'e1', 'e2', 'e3', 'e4', 'e5',],
     ZONESIZE: 128,
+    MAPSTARTX: 320,
+    MAPSTARTY: 0,
 };
+function Resize() {
+    var canvas = this.game.canvas, width = window.innerWidth, height = window.innerHeight;
+    var wratio = width / height, ratio = canvas.width / canvas.height;
+    if (wratio < ratio) {
+        canvas.style.width = width + "px";
+        canvas.style.height = (width / ratio) + "px";
+    }
+    else {
+        canvas.style.width = (height * ratio) + "px";
+        canvas.style.height = height + "px";
+    }
+}
+exports.Resize = Resize;
 
 
 /***/ }),

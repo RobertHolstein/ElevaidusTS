@@ -4,17 +4,18 @@ import * as io from 'socket.io-client';
 import 'phaser';
 import { GameScene } from "./scenes/gameScene";
 
-var signInDiv = document.getElementById('signInDiv');
 var signInUsername = document.getElementById('signInUsername') as HTMLInputElement;
 var signInPassword = document.getElementById('signInPassword') as HTMLInputElement;
+var form = document.getElementById('login-form');
 var signInBtn = document.getElementById('signInBtn');
 var signUpBtn = document.getElementById('signUpBtn');
+var game: Phaser.Game;
 
 const config: GameConfig = {
   title: "Elevaidus",
   version: "1.0",
-  width: 640,
-  height: 640,
+  width: 1280,
+  height: 1280,
   type: Phaser.AUTO,
   parent: "game",
   scene: [ GameScene ],
@@ -39,6 +40,7 @@ export class ioService {
   constructor() {
     this.socket = io.connect();
     this.sendMessage('hello from the frontend!');
+    this.RegisterListeners();
   }
 
   // EMITTER
@@ -51,27 +53,29 @@ export class ioService {
 
   public SignIn(): void {
     this.socket.emit('signIn', {username: signInUsername.value, password: signInPassword.value })
-    this.socket.on('signedIn', (playerInfo: any) => {
-      this.CreateGame(playerInfo);
-    })
-    this.socket.on('errorFromBackend', (err: string) => {
-      alert(err);
-    })
   }
   
   public SignUp(): void {
     this.socket.emit('signUp', {username: signInUsername.value, password: signInPassword.value })
-    this.socket.on('signedUp', (playerInfo: any) => {
-      this.CreateGame(playerInfo)
-    })
+  }
+
+  private RegisterListeners(): void {
     this.socket.on('errorFromBackend', (err: string) => {
       alert(err);
+    });
+    this.socket.on('signedIn', (playerInfo: any) => {
+      this.CreateGame(playerInfo);
+    })
+    this.socket.on('signedUp', (playerInfo: any) => {
+      this.CreateGame(playerInfo)
     })
   }
   
   private CreateGame(playerInfo: any): void{
-    signInDiv.hidden = true;
-    var game = new Phaser.Game(config);
+    form.hidden = true;
+    if(!game){
+    game = new Phaser.Game(config);
+    }
     console.log(playerInfo)
   }
 }
@@ -84,3 +88,8 @@ signInBtn.onclick = () => {
 signUpBtn.onclick = () => {
   socket.SignUp();
 }
+
+form.onsubmit=function() {
+  return false;
+}
+

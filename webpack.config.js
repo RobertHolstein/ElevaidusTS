@@ -60,6 +60,10 @@ module.exports = [
             {
                 from:  __dirname + '/src/client/assets/',
                  to:  'client/assets/'
+            },
+            {
+                from:  __dirname + '/src/client/css/',
+                 to:  'client/css/'
             }
         ])
         ]

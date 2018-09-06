@@ -3,14 +3,23 @@
   <head>
     <meta charset="UTF-8">
     <title>Elevaidus</title>
+    <link rel="stylesheet" href="css/index.css">
   </head>
-  <body style="background-color:black;">
-    <div id="signInDiv">
-      Username <input type="text" id="signInUsername" placeholder="username">
-      Password <input type="password" id="signInPassword" placeholder="password">
-      <button id="signInBtn" type="submit">Sign In</button>
-      <button id="signUpBtn" type="submit">Sign Up</button>
-    </div>
+  <body>
+      <div id="login-form" class="login-form">
+        <p class="login-text">
+          <span class="fa-stack fa-lg">
+            <i class="fa fa-circle fa-stack-2x"></i>
+            <i class="fa fa-lock fa-stack-1x"></i>
+          </span>
+        </p>
+        <input id="signInUsername" type="text" class="login-username" autofocus="true" required="true" placeholder="Email" />
+        <input id="signInPassword" type="password" class="login-password" required="true" placeholder="Password" />
+        <input type="submit" name="Login" value="Login" id="signInBtn" class="login-submit" /> 
+        <input type="submit" name="SignUp" value="Sign Up" id="signUpBtn" class="login-submit" />
+      </div>
+      <div class="underlay-photo"></div>
+      <div class="underlay-black"></div>
     <script type="text/javascript" src="./js/bundle.js"></script>
   </body>
 </html>

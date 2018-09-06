@@ -1,6 +1,8 @@
 import * as mysql from 'mysql';
 import { CONST } from '../const/const';
 import {Skill, GetSkills} from './Skill';
+import {PlayerClass, GetPlayerClasses} from './PlayerClass';
+
 
 // TODO: Import class array from json
 const playerClasses: Array<PlayerClass> = new Array<PlayerClass>();
@@ -12,15 +14,19 @@ export class Player {
     public class: string;
     public skills: Skill[]; 
     public id: number;
+    public username: string;
     public zone: string;
     public health: number;
+    public playerClasses: PlayerClass[];
 
     constructor(io: SocketIO.Server, socket: SocketIO.EngineSocket, db: mysql.Pool, playerInfo: any){
        this.io = io;
        this.socket = socket;
        this.db = db;
-       this.skills = GetSkills();
        this.id = playerInfo.player.id;
+       this.username = playerInfo.player.username;
+       this.skills = GetSkills();
+       this.playerClasses = GetPlayerClasses();
         if(playerInfo.isNew){
             this.CreateNewPlayer();
         }else{
@@ -33,9 +39,7 @@ export class Player {
         this.class = playerInfo.class;
         this.zone = playerInfo.zone;
         this.health = playerInfo.health;
-        this.socket.emit('signedIn', {
-            id: this.id, skills: this.skills, class: this.class, zone: this.zone, health: this.health
-        });
+        this.socket.emit('signedIn', this.FrontendPlayerInfo());
     }
 
     private CreateNewPlayer(): void {
@@ -44,21 +48,31 @@ export class Player {
         this.zone = CONST.STARTINGZONE;
         this.health = CONST.STARTINGHEALTH;
         this.saveInDatabase();
-        this.socket.emit('signedUp', {
-            id: this.id, skills: this.skills, class: this.class, zone: this.zone, health: this.health
-        });
+        this.socket.emit('signedUp', this.FrontendPlayerInfo());
+    }
+
+    private FrontendPlayerInfo(): any {
+        let player: any = {
+            id: this.id,
+            username: this.username,
+            skills: this.skills,
+            class: this.class,
+            zone: this.zone,
+            health: this.health
+        }
+        return player;
     }
 
     private GenerateClass(): void {
-        var randomNumber = Math.floor(Math.random()*playerClasses.length) 
-        this.class =  playerClasses[randomNumber].name;
+        var randomNumber = Math.floor(Math.random()*this.playerClasses.length) 
+        this.class =  this.playerClasses[randomNumber].name;
     };
 
 
 
     private GenerateSkills(): void {
         this.GenerateRandomSkills();
-        let thisPlayerClass = playerClasses.find(i => i.name === this.class)
+        let thisPlayerClass = this.playerClasses.find(i => i.name === this.class)
         thisPlayerClass.skills.forEach(i => {
             let skill = this.skills.find(j => j.name === i.name)
             if(skill === undefined){
@@ -69,13 +83,14 @@ export class Player {
     }
 
     public SetSkills(playerInfo: any): void {
-        for(let i in playerInfo){
-            this.skills.forEach(skill => {
-                if(i === skill.name){
-                    // i.valueOf = skill.level;
-                }               
-            });
-        }
+        for(var s = 0; s < this.skills.length; s++){
+            for(let prop in playerInfo){
+                if(prop === this.skills[s].name){
+                    this.skills[s].level = playerInfo[prop];
+                    break;
+                }
+            }
+        };
     }
 
     public GenerateRandomSkills(): void {
@@ -85,7 +100,7 @@ export class Player {
     }
 
     private saveInDatabase(): void {
-        let sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ? WHERE id = ?';
+        let sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ?, crafting = ? WHERE id = ?';
         this.db.query(sql, 
             [
                 this.zone,
@@ -95,6 +110,7 @@ export class Player {
                 this.skills.find(i => i.name === 'mining').level,
                 this.skills.find(i => i.name === 'healing').level,
                 this.skills.find(i => i.name === 'fighting').level,
+                this.skills.find(i => i.name === 'crafting').level,
                 this.id
             ],
             (err, res) =>{
@@ -116,16 +132,3 @@ export class Player {
 
 
 
-class PlayerClass {
-    name: string;
-    skills: Skill[];
-    constructor(name:string, skills: Skill[]){
-        this.name = name;
-        this.skills = skills;
-    }
-}
-
-playerClasses.push(new PlayerClass("miner", [ {name: 'mining', level: 25, progress: 0 }, {name: 'fighting', level: 5, progress: 0 } ]))
-playerClasses.push(new PlayerClass("farmer", [ {name: 'farming', level: 25, progress: 0 }, {name: 'healing', level: 5, progress: 0 } ]))
-playerClasses.push(new PlayerClass("priest", [ {name: 'healing', level: 25, progress: 0 }, {name: 'farming', level: 5, progress: 0 } ]))
-playerClasses.push(new PlayerClass("fighter", [ {name: 'fighting', level: 25, progress: 0 }, {name: 'healing', level: 5, progress: 0 } ]))
