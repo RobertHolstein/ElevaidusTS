@@ -97,8 +97,7 @@
 
 Object.defineProperty(exports, "__esModule", { value: true });
 console.log("\n\n===============>\t app starting\n");
-var const_1 = __webpack_require__(/*! ../shared/const */ "./src/shared/const.ts");
-var const_2 = __webpack_require__(/*! ./const/const */ "./src/server/const/const.ts");
+var const_1 = __webpack_require__(/*! ./const/const */ "./src/server/const/const.ts");
 var mysql = __webpack_require__(/*! mysql */ "mysql");
 var http_1 = __webpack_require__(/*! http */ "http");
 var express = __webpack_require__(/*! express */ "express");
@@ -108,10 +107,10 @@ var Player_1 = __webpack_require__(/*! ./objects/Player */ "./src/server/objects
 var App = (function () {
     function App() {
         this.dbConfig = {
-            host: const_2.CONST.HOST,
-            user: const_2.CONST.DBUSER,
-            password: const_2.CONST.DBPASSWORD,
-            database: const_2.CONST.DATABASE
+            host: const_1.CONST.HOST,
+            user: const_1.CONST.DBUSER,
+            password: const_1.CONST.DBPASSWORD,
+            database: const_1.CONST.DATABASE
         };
         this.createApp();
         this.config();
@@ -119,11 +118,14 @@ var App = (function () {
         this.Routes();
         this.sockets();
         this.listen();
-        this.CreateZones();
+        this.zones = const_1.CONST.ZONES;
         this.dbConnect();
     }
     App.prototype.createApp = function () {
         this.app = express();
+    };
+    App.prototype.config = function () {
+        this.port = process.env.PORT || 4001;
     };
     App.prototype.createServer = function () {
         this.server = http_1.createServer(this.app);
@@ -136,21 +138,9 @@ var App = (function () {
         });
         this.app.use("/assets", express.static('./dist/client/assets'));
     };
-    App.prototype.config = function () {
-        this.port = process.env.PORT || 4001;
-    };
     App.prototype.sockets = function () {
         this.io = socketIo.listen(this.server);
         ;
-    };
-    App.prototype.CreateZones = function () {
-        this.zones = [];
-        for (var i = 0; i < const_1.SHARED.ZONELTRS.length; i++) {
-            this.zones[i] = [];
-            for (var j = 1; j < 6; j++) {
-                this.zones[i][j] = { name: "" + const_1.SHARED.ZONELTRS[i] + j.toString() };
-            }
-        }
     };
     App.prototype.listen = function () {
         var _this = this;
@@ -161,7 +151,7 @@ var App = (function () {
             console.log("\n\n===============>\t connected client on port " + _this.port + "\n");
             socket.on('messageFromFrontend', function (m) {
                 console.log("\n\n===============>\t " + m + "\n");
-                _this.io.emit('messageFromBackend', 'Hello from the backend!');
+                socket.emit('messageFromBackend', 'testing connectivity from backend');
             });
             socket.on('signIn', function (signInInfo) {
                 var sql = 'SELECT * FROM player WHERE username = ? AND password = ?';
@@ -204,14 +194,11 @@ var App = (function () {
                                 console.log(err);
                             }
                             else {
-                                var player = _this.CreatePlayer(socket, { player: { id: res.insertId }, isNew: true });
+                                var player = _this.CreatePlayer(socket, { player: { id: res.insertId, username: signUpInfo.username }, isNew: true });
                             }
                         });
                     }
                 });
-            });
-            socket.on('disconnect', function () {
-                console.log("\n\n===============>\t client disconnected\n");
             });
         });
     };
@@ -226,14 +213,14 @@ var App = (function () {
                 throw err;
             }
             else {
-                console.log("\n\n===============>\t " + const_2.CONST.DATABASE + " database connected\n");
+                console.log("\n\n===============>\t " + const_1.CONST.DATABASE + " database connected\n");
                 var sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, crafting int, PRIMARY KEY (id), UNIQUE KEY username (username))";
                 db.query(sql, function (err, result) {
                     if (err) {
                         throw err;
                     }
                     else {
-                        console.log("\n\n===============>\t " + const_2.CONST.DATABASE + " database tables check\n");
+                        console.log("\n\n===============>\t " + const_1.CONST.DATABASE + " database tables check\n");
                     }
                 });
                 _this.db = db;
@@ -241,7 +228,7 @@ var App = (function () {
         });
         db.on('error', function (err) {
             if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-                console.log("\n\n===============>\t " + const_2.CONST.DATABASE + " database tables check\n");
+                console.log("\n\n===============>\t " + const_1.CONST.DATABASE + " database tables check\n");
                 var db = mysql.createPool(_this.dbConfig);
                 _this.db = db;
             }
@@ -282,6 +269,33 @@ exports.CONST = {
         { name: 'miner', farming: 5, mining: 20, healing: 0, fighting: 5, crafting: 0 },
         { name: 'priest', farming: 5, mining: 0, healing: 25, fighting: 0, crafting: 5 },
         { name: 'craftsmen', farming: 0, mining: 5, healing: 0, fighting: 0, crafting: 25 }
+    ],
+    ZONES: [
+        { name: 'a1' },
+        { name: 'a2' },
+        { name: 'a3' },
+        { name: 'a4' },
+        { name: 'a5' },
+        { name: 'b1' },
+        { name: 'b2' },
+        { name: 'b3' },
+        { name: 'b4' },
+        { name: 'b5' },
+        { name: 'c1' },
+        { name: 'c2' },
+        { name: 'c3' },
+        { name: 'c4' },
+        { name: 'c5' },
+        { name: 'd1' },
+        { name: 'd2' },
+        { name: 'd3' },
+        { name: 'd4' },
+        { name: 'd5' },
+        { name: 'e1' },
+        { name: 'e2' },
+        { name: 'e3' },
+        { name: 'e4' },
+        { name: 'e5' },
     ]
 };
 
@@ -314,19 +328,25 @@ var app = new app_1.App();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var const_1 = __webpack_require__(/*! ../const/const */ "./src/server/const/const.ts");
+var const_1 = __webpack_require__(/*! ../../shared/const */ "./src/shared/const.ts");
+var const_2 = __webpack_require__(/*! ../const/const */ "./src/server/const/const.ts");
 var Skill_1 = __webpack_require__(/*! ./Skill */ "./src/server/objects/Skill.ts");
 var PlayerClass_1 = __webpack_require__(/*! ./PlayerClass */ "./src/server/objects/PlayerClass.ts");
-var playerClasses = new Array();
+var zones = [];
+const_1.SHARED.ZONES.forEach(function (zone) {
+    zones[zone] = {};
+    zones[zone].players = [];
+});
+var playerClasses = PlayerClass_1.GetPlayerClasses();
 var Player = (function () {
     function Player(io, socket, db, playerInfo) {
         this.io = io;
         this.socket = socket;
+        this.Listen();
         this.db = db;
         this.id = playerInfo.player.id;
         this.username = playerInfo.player.username;
         this.skills = Skill_1.GetSkills();
-        this.playerClasses = PlayerClass_1.GetPlayerClasses();
         if (playerInfo.isNew) {
             this.CreateNewPlayer();
         }
@@ -334,20 +354,48 @@ var Player = (function () {
             this.SetPlayerInfo(playerInfo.player);
         }
     }
+    Player.prototype.Listen = function () {
+        var _this = this;
+        this.socket.on('disconnect', function () {
+            console.log("\n\n===============>\t client disconnected\n");
+            delete zones[_this.zone].players[_this.socket.id];
+            _this.socket.to(_this.zone).emit('removePlayer', _this.FrontendPlayerInfo());
+        });
+    };
     Player.prototype.SetPlayerInfo = function (playerInfo) {
         this.SetSkills(playerInfo);
         this.class = playerInfo.class;
         this.zone = playerInfo.zone;
         this.health = playerInfo.health;
-        this.socket.emit('signedIn', this.FrontendPlayerInfo());
+        this.Join();
     };
     Player.prototype.CreateNewPlayer = function () {
         this.GenerateClass();
         this.GenerateSkills();
-        this.zone = const_1.CONST.STARTINGZONE;
-        this.health = const_1.CONST.STARTINGHEALTH;
+        this.zone = const_2.CONST.STARTINGZONE;
+        this.health = const_2.CONST.STARTINGHEALTH;
         this.saveInDatabase();
-        this.socket.emit('signedUp', this.FrontendPlayerInfo());
+        this.Join();
+    };
+    Player.prototype.Join = function () {
+        this.socket.emit('join', this.FrontendPlayerInfo());
+        this.JoinNewArea(this.zone, true);
+    };
+    Player.prototype.JoinNewArea = function (newZone, newlyJoin) {
+        if (!newlyJoin) {
+            this.socket.leave(this.zone);
+            this.socket.to(this.zone).emit('removePlayer', this.FrontendPlayerInfo());
+        }
+        this.zone = newZone;
+        this.socket.join(this.zone);
+        var playersInArea = [];
+        zones[this.zone].players[this.socket.id] = this.FrontendPlayerInfo();
+        for (var p in zones[this.zone].players) {
+            playersInArea.push(zones[this.zone].players[p]);
+        }
+        ;
+        this.socket.emit('currentPlayers', playersInArea);
+        this.socket.to(this.zone).emit('addPlayer', zones[this.zone].players[this.socket.id]);
     };
     Player.prototype.FrontendPlayerInfo = function () {
         var player = {
@@ -361,14 +409,14 @@ var Player = (function () {
         return player;
     };
     Player.prototype.GenerateClass = function () {
-        var randomNumber = Math.floor(Math.random() * this.playerClasses.length);
-        this.class = this.playerClasses[randomNumber].name;
+        var randomNumber = Math.floor(Math.random() * playerClasses.length);
+        this.class = playerClasses[randomNumber].name;
     };
     ;
     Player.prototype.GenerateSkills = function () {
         var _this = this;
         this.GenerateRandomSkills();
-        var thisPlayerClass = this.playerClasses.find(function (i) { return i.name === _this.class; });
+        var thisPlayerClass = playerClasses.find(function (i) { return i.name === _this.class; });
         thisPlayerClass.skills.forEach(function (i) {
             var skill = _this.skills.find(function (j) { return j.name === i.name; });
             if (skill === undefined) {
@@ -523,6 +571,12 @@ function Resize() {
     }
 }
 exports.Resize = Resize;
+var PlayerInfo = (function () {
+    function PlayerInfo() {
+    }
+    return PlayerInfo;
+}());
+exports.PlayerInfo = PlayerInfo;
 
 
 /***/ }),

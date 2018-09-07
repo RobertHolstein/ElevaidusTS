@@ -1,5 +1,6 @@
 /// <reference path="./phaser.d.ts"/>
 
+import { PlayerInfo } from "../shared/const"
 import * as io from 'socket.io-client';
 import 'phaser';
 import { GameScene } from "./scenes/gameScene";
@@ -39,16 +40,13 @@ export class ioService {
 
   constructor() {
     this.socket = io.connect();
-    this.sendMessage('hello from the frontend!');
-    this.RegisterListeners();
+    this.sendMessage('testing connectivity from frontend');
+    this.Listen();
   }
 
   // EMITTER
   private sendMessage(msg: string) {
     this.socket.emit('messageFromFrontend', msg );
-    this.socket.on('messageFromBackend', (m: string) => {
-      console.log(`\n\n===============>\t ${m}\n`);
-      });
   }
 
   public SignIn(): void {
@@ -59,15 +57,28 @@ export class ioService {
     this.socket.emit('signUp', {username: signInUsername.value, password: signInPassword.value })
   }
 
-  private RegisterListeners(): void {
+  private Listen(): void {
     this.socket.on('errorFromBackend', (err: string) => {
       alert(err);
     });
-    this.socket.on('signedIn', (playerInfo: any) => {
+    this.socket.on('messageFromBackend', (m: string) => {
+      console.log(`\n\n===============>\t ${m}\n`);
+    });
+    this.socket.on('join', (playerInfo: any) => {
       this.CreateGame(playerInfo);
     })
-    this.socket.on('signedUp', (playerInfo: any) => {
-      this.CreateGame(playerInfo)
+    this.socket.on('currentPlayers', (playersInfo: PlayerInfo[]) => {
+      playersInfo.forEach(player => {
+        console.log(player);
+      });
+    })
+    this.socket.on('addPlayer', (playerInfo: PlayerInfo) => {
+      console.log(`\n\n===============>\t new player arrived in your area\n`);
+      console.log(playerInfo);
+    })
+    this.socket.on('removePlayer', (playerInfo: PlayerInfo) => {
+      console.log(`\n\n===============>\t player left your area\n`);
+      console.log(playerInfo);
     })
   }
   
@@ -76,7 +87,6 @@ export class ioService {
     if(!game){
     game = new Phaser.Game(config);
     }
-    console.log(playerInfo)
   }
 }
 

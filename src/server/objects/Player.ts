@@ -1,32 +1,38 @@
 import * as mysql from 'mysql';
+import { PlayerInfo, SHARED } from "../../shared/const"
 import { CONST } from '../const/const';
 import {Skill, GetSkills} from './Skill';
 import {PlayerClass, GetPlayerClasses} from './PlayerClass';
 
+// zones, not sure where else to put them atm
+var zones: any = [];
+SHARED.ZONES.forEach(zone => {
+    zones[zone] = {};
+    zones[zone].players = [];
+});
 
-// TODO: Import class array from json
-const playerClasses: Array<PlayerClass> = new Array<PlayerClass>();
+const playerClasses: Array<PlayerClass> = GetPlayerClasses();
 
 export class Player {
     private io: SocketIO.Server;
-    private socket: SocketIO.EngineSocket;
+    private socket: SocketIO.Socket;
     private db: mysql.Pool;
-    public class: string;
-    public skills: Skill[]; 
-    public id: number;
-    public username: string;
-    public zone: string;
-    public health: number;
-    public playerClasses: PlayerClass[];
+    private class: string;
+    private skills: Skill[]; 
+    private id: number;
+    private username: string;
+    private zone: string;
+    private health: number;
 
-    constructor(io: SocketIO.Server, socket: SocketIO.EngineSocket, db: mysql.Pool, playerInfo: any){
+
+    constructor(io: SocketIO.Server, socket: SocketIO.Socket, db: mysql.Pool, playerInfo: any){
        this.io = io;
        this.socket = socket;
+       this.Listen();
        this.db = db;
        this.id = playerInfo.player.id;
        this.username = playerInfo.player.username;
        this.skills = GetSkills();
-       this.playerClasses = GetPlayerClasses();
         if(playerInfo.isNew){
             this.CreateNewPlayer();
         }else{
@@ -34,12 +40,20 @@ export class Player {
         }
     }
 
+    private Listen(): void {
+        this.socket.on('disconnect', () => {
+            console.log(`\n\n===============>\t client disconnected\n`);
+            delete zones[this.zone].players[this.socket.id];
+            this.socket.to(this.zone).emit('removePlayer', this.FrontendPlayerInfo());
+        });
+    }
+
     private SetPlayerInfo(playerInfo: any): void {
         this.SetSkills(playerInfo);
         this.class = playerInfo.class;
         this.zone = playerInfo.zone;
         this.health = playerInfo.health;
-        this.socket.emit('signedIn', this.FrontendPlayerInfo());
+        this.Join();
     }
 
     private CreateNewPlayer(): void {
@@ -48,11 +62,33 @@ export class Player {
         this.zone = CONST.STARTINGZONE;
         this.health = CONST.STARTINGHEALTH;
         this.saveInDatabase();
-        this.socket.emit('signedUp', this.FrontendPlayerInfo());
+        this.Join();
     }
 
-    private FrontendPlayerInfo(): any {
-        let player: any = {
+    private Join(): void {        
+        this.socket.emit('join', this.FrontendPlayerInfo());
+        this.JoinNewArea(this.zone, true);
+    }
+
+    private JoinNewArea(newZone:string, newlyJoin: boolean): void {
+        if(!newlyJoin){
+            this.socket.leave(this.zone)
+            this.socket.to(this.zone).emit('removePlayer', this.FrontendPlayerInfo());
+        }
+        this.zone = newZone;
+        this.socket.join(this.zone);
+        //TODO: save new area in database
+        let playersInArea: PlayerInfo[] = []
+        zones[this.zone].players[this.socket.id] = this.FrontendPlayerInfo();
+        for(let p in zones[this.zone].players){
+            playersInArea.push(zones[this.zone].players[p])
+        };
+        this.socket.emit('currentPlayers', playersInArea);
+        this.socket.to(this.zone).emit('addPlayer', zones[this.zone].players[this.socket.id]);
+    }
+
+    private FrontendPlayerInfo(): PlayerInfo {
+        let player: PlayerInfo = {
             id: this.id,
             username: this.username,
             skills: this.skills,
@@ -64,15 +100,15 @@ export class Player {
     }
 
     private GenerateClass(): void {
-        var randomNumber = Math.floor(Math.random()*this.playerClasses.length) 
-        this.class =  this.playerClasses[randomNumber].name;
+        var randomNumber = Math.floor(Math.random()*playerClasses.length) 
+        this.class =  playerClasses[randomNumber].name;
     };
 
 
 
     private GenerateSkills(): void {
         this.GenerateRandomSkills();
-        let thisPlayerClass = this.playerClasses.find(i => i.name === this.class)
+        let thisPlayerClass = playerClasses.find(i => i.name === this.class)
         thisPlayerClass.skills.forEach(i => {
             let skill = this.skills.find(j => j.name === i.name)
             if(skill === undefined){

@@ -20,6 +20,34 @@ export let CONST = {
         {name:'miner',      farming:5,  mining:20,  healing:0,  fighting:5,     crafting:0},
         {name:'priest',     farming:5,  mining:0,   healing:25, fighting:0,     crafting:5},
         {name:'craftsmen',  farming:0,  mining:5,   healing:0,  fighting:0,     crafting:25}
+    ],
+
+    ZONES:[
+        { name: 'a1' },
+        { name: 'a2' },
+        { name: 'a3' },
+        { name: 'a4' },
+        { name: 'a5' },
+        { name: 'b1' },
+        { name: 'b2' },
+        { name: 'b3' },
+        { name: 'b4' },
+        { name: 'b5' },
+        { name: 'c1' },
+        { name: 'c2' },
+        { name: 'c3' },
+        { name: 'c4' },
+        { name: 'c5' },
+        { name: 'd1' },
+        { name: 'd2' },
+        { name: 'd3' },
+        { name: 'd4' },
+        { name: 'd5' },
+        { name: 'e1' },
+        { name: 'e2' },
+        { name: 'e3' },
+        { name: 'e4' },
+        { name: 'e5' },
     ]
 
 }

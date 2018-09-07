@@ -18,3 +18,12 @@ export function Resize(): void {
         canvas.style.height = height + "px";
     }
 }
+
+export class PlayerInfo {
+    id: number;
+    username: string;
+    skills: {}[];
+    class: string;
+    zone: string;
+    health: number;
+}

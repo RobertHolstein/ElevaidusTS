@@ -17,7 +17,7 @@ export class App {
     public io: SocketIO.Server;
     private port: string | number;
     public db: mysql.Pool;
-    public zones: any[][];
+    public zones: {}[];
     private dbConfig = {
         host        : CONST.HOST,
         user        : CONST.DBUSER,
@@ -32,12 +32,16 @@ export class App {
         this.Routes();
         this.sockets();
         this.listen();
-        this.CreateZones();
+        this.zones = CONST.ZONES;
         this.dbConnect();
     }
 
     private createApp(): void {
         this.app = express();
+    }
+
+    private config(): void {
+        this.port = process.env.PORT || 4001;
     }
 
     private createServer(): void {
@@ -52,24 +56,8 @@ export class App {
         this.app.use("/assets", express.static('./dist/client/assets'));
     }
 
-    private config(): void {
-        this.port = process.env.PORT || 4001;
-    }
-
     private sockets(): void {
         this.io = socketIo.listen(this.server);;
-    }
-
-    private CreateZones(): void {
-        this.zones = [];
-        for (let i = 0; i < SHARED.ZONELTRS.length; i++) {
-            this.zones[i]  = []
-            for (let j = 1; j < 6; j++) {
-                this.zones[i][j] = {name: `${SHARED.ZONELTRS[i]}${j.toString()}`};
-            }
-            
-        }
-        // TODO: add more propties in zones
     }
 
     private listen(): void {
@@ -77,11 +65,11 @@ export class App {
             console.log(`\n\n===============>\t running server on port ${this.port}\n`);
         });
 
-        this.io.on('connect', (socket: socketIo.EngineSocket) => {
+        this.io.on('connect', (socket: socketIo.Socket) => {
             console.log(`\n\n===============>\t connected client on port ${this.port}\n`);
             socket.on('messageFromFrontend', (m: string) => {
                 console.log(`\n\n===============>\t ${m}\n`);
-                this.io.emit('messageFromBackend', 'Hello from the backend!');
+                socket.emit('messageFromBackend', 'testing connectivity from backend');
             });
 
             socket.on('signIn', (signInInfo: any) => {
@@ -121,20 +109,16 @@ export class App {
                             if(err){
                                 console.log(err);
                             }else{
-                                let player = this.CreatePlayer(socket, {player: {id:res.insertId}, isNew: true});
+                                let player = this.CreatePlayer(socket, {player: {id:res.insertId, username:signUpInfo.username}, isNew: true});
                             }
                         });
                     }
                 }) 
             })
-            
-            socket.on('disconnect', () => {
-            console.log(`\n\n===============>\t client disconnected\n`);
-            });
         });
     }
 
-    private CreatePlayer(socket: socketIo.EngineSocket, playerInfo: any): void {
+    private CreatePlayer(socket: socketIo.Socket, playerInfo: any): void {
         let player = new Player(this.io, socket, this.db, playerInfo);
     }
 

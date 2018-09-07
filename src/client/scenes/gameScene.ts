@@ -11,16 +11,16 @@ export class GameScene extends Phaser.Scene {
     }
     preload(): void {
         this.load.image('tiles', './assets/tilesheet.png');
-        this.load.tilemapTiledJSON('map', './assets/elevaidus_map.json');
-        this.load.spritesheet('charactor', 'assets/sprites/charactor.png', { frameWidth: 48, frameHeight: 48 })
+        this.load.tilemapTiledJSON('map', './assets/elevaidus_mapv2.json');
+        this.load.spritesheet('charactor', 'assets/sprites/charactor.png', { frameWidth: 48, frameHeight: 48 });
     }
 
     create(): void {
-        const map = this.make.tilemap({key: 'map' })
-        const tileset = map.addTilesetImage('tilesheet', 'tiles')
-        const groundLayer = map.createStaticLayer("ground", tileset, SHARED.MAPSTARTX, 0);
-        const grassLayer = map.createStaticLayer("grass", tileset, SHARED.MAPSTARTX, 0);
-        const onLayer = map.createStaticLayer("on", tileset, SHARED.MAPSTARTX, 0);
+        const map = this.make.tilemap({key: 'map' });
+        const tileset = map.addTilesetImage('tilesheet', 'tiles');
+        map.layers.forEach(layer => {
+            map.createStaticLayer(layer.name, tileset, SHARED.MAPSTARTX, 0);
+        });
         
         const zoneLetters = SHARED.ZONELTRS;
         var zones: any = [];
@@ -55,7 +55,7 @@ export class GameScene extends Phaser.Scene {
                 label.setText(gameObject.name);
                 label.x = gameObject.x;
                 label.y = gameObject.y;
-                this.player.setPosition(gameObject.x + SHARED.ZONESIZE/2, gameObject.y + SHARED.ZONESIZE/2)
+                this.player.setPosition(gameObject.x + SHARED.ZONESIZE/2, gameObject.y + SHARED.ZONESIZE/2);
             }
             // TODO: make menu
             // menu.fillRect(gameObject.x,gameObject.y,SHARED.ZONESIZE,SHARED.ZONESIZE/3);
