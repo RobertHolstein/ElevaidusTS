@@ -21,6 +21,7 @@ export function Resize(): void {
 
 export class PlayerInfo {
     id: number;
+    socketId: string;
     username: string;
     skills: {}[];
     class: string;

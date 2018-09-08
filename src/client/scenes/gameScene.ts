@@ -1,13 +1,19 @@
 
-import { SHARED } from "../../shared/const"
+import { SHARED } from "../../shared/const";
+import { CONST } from "../const/const";
 import { Player } from "../objects/Player"; 
+import { RightMenu } from "../objects/gameScene/RightMenu"
+import * as io from 'socket.io-client';
+
 
 export class GameScene extends Phaser.Scene {
     private player: Player;
-    constructor(){
+    private socket: SocketIOClient.Socket;
+    constructor(socket: SocketIOClient.Socket){
         super({
             key: "GameScene"
         })
+        this.socket = socket;
     }
     preload(): void {
         this.load.image('tiles', './assets/tilesheet.png');
@@ -37,18 +43,15 @@ export class GameScene extends Phaser.Scene {
             zoneY = 0;
             zoneX += SHARED.ZONESIZE;
         }
-        this.player = new Player({
-            scene: this,
-            x: SHARED.MAPSTARTX + SHARED.ZONESIZE/2,
-            y: SHARED.MAPSTARTY + SHARED.ZONESIZE/2,
-            key: "charactor"
-        });
-        var label = this.add.text(0, 0, '', { font: "24px Arial Black" });
-        var leftMenu =this.add.graphics().lineStyle(1, 0xffffff).strokeRect(0,0,320,640);
-        var rightMenu =this.add.graphics().lineStyle(1, 0xffffff).strokeRect(960,0,320,640);
-        var bottomMenu =this.add.graphics().lineStyle(1, 0xffffff).strokeRect(0,640,1280,320);
 
+        var label = this.add.text(0, 0, '', { font: "24px Arial Black" });
+        var leftMenu =this.add.graphics().lineStyle(1, 0xffffff).strokeRect(CONST.MenuLeftStartX,CONST.MenuLeftStartY,CONST.MenuLeftWidth,CONST.MenuLeftHeight);
+        var rightMenu = new RightMenu(this, this.socket);
+        var bottomMenu =this.add.graphics().lineStyle(1, 0xffffff).strokeRect(0,640,1280,320);
         var mapMenu = this.add.graphics().fillStyle(0xffffff);
+
+        
+        
 
         this.input.on('gameobjectdown', (pointer: Phaser.Input.Pointer, gameObject: any) => {
             if(SHARED.ZONES.indexOf(gameObject.name) > -1){
@@ -62,6 +65,15 @@ export class GameScene extends Phaser.Scene {
             // menu.fillRect(gameObject.x, gameObject.y + 2 * SHARED.ZONESIZE/3,SHARED.ZONESIZE,SHARED.ZONESIZE/3);
 
         })
+
+        this.player = new Player({
+            socket: this.socket,
+            scene: this,
+            x: SHARED.MAPSTARTX + SHARED.ZONESIZE/2,
+            y: SHARED.MAPSTARTY + SHARED.ZONESIZE/2,
+            key: "charactor"
+        });
+        this.socket.emit('gameReady')
     }
 
     update(): void {

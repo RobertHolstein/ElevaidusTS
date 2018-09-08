@@ -90,6 +90,7 @@ export class Player {
     private FrontendPlayerInfo(): PlayerInfo {
         let player: PlayerInfo = {
             id: this.id,
+            socketId: this.socket.id,
             username: this.username,
             skills: this.skills,
             class: this.class,

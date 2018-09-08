@@ -203,7 +203,11 @@ var App = (function () {
         });
     };
     App.prototype.CreatePlayer = function (socket, playerInfo) {
-        var player = new Player_1.Player(this.io, socket, this.db, playerInfo);
+        var _this = this;
+        socket.emit('signInSuccess');
+        socket.on('gameReady', function () {
+            var player = new Player_1.Player(_this.io, socket, _this.db, playerInfo);
+        });
     };
     App.prototype.dbConnect = function () {
         var _this = this;
@@ -400,6 +404,7 @@ var Player = (function () {
     Player.prototype.FrontendPlayerInfo = function () {
         var player = {
             id: this.id,
+            socketId: this.socket.id,
             username: this.username,
             skills: this.skills,
             class: this.class,

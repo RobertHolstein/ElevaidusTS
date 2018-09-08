@@ -1,16 +1,14 @@
 /// <reference path="./phaser.d.ts"/>
 
-import { PlayerInfo } from "../shared/const"
 import * as io from 'socket.io-client';
 import 'phaser';
 import { GameScene } from "./scenes/gameScene";
 
 var signInUsername = document.getElementById('signInUsername') as HTMLInputElement;
 var signInPassword = document.getElementById('signInPassword') as HTMLInputElement;
-var form = document.getElementById('login-form');
+var loginDiv = document.getElementById('login-form');
 var signInBtn = document.getElementById('signInBtn');
 var signUpBtn = document.getElementById('signUpBtn');
-var game: Phaser.Game;
 
 const config: GameConfig = {
   title: "Elevaidus",
@@ -19,7 +17,7 @@ const config: GameConfig = {
   height: 1280,
   type: Phaser.AUTO,
   parent: "game",
-  scene: [ GameScene ],
+  scene: [ ],
   input: {
     keyboard: true
   },
@@ -35,17 +33,17 @@ const config: GameConfig = {
 
 
 
-export class ioService {
+export class LoginService {
   private socket: SocketIOClient.Socket;
 
-  constructor() {
-    this.socket = io.connect();
-    this.sendMessage('testing connectivity from frontend');
+  constructor(socket:  SocketIOClient.Socket) {
+    this.socket = socket;
+    this.SendMessage('testing connectivity from frontend');
     this.Listen();
   }
 
   // EMITTER
-  private sendMessage(msg: string) {
+  private SendMessage(msg: string) {
     this.socket.emit('messageFromFrontend', msg );
   }
 
@@ -64,42 +62,27 @@ export class ioService {
     this.socket.on('messageFromBackend', (m: string) => {
       console.log(`\n\n===============>\t ${m}\n`);
     });
-    this.socket.on('join', (playerInfo: any) => {
-      this.CreateGame(playerInfo);
-    })
-    this.socket.on('currentPlayers', (playersInfo: PlayerInfo[]) => {
-      playersInfo.forEach(player => {
-        console.log(player);
-      });
-    })
-    this.socket.on('addPlayer', (playerInfo: PlayerInfo) => {
-      console.log(`\n\n===============>\t new player arrived in your area\n`);
-      console.log(playerInfo);
-    })
-    this.socket.on('removePlayer', (playerInfo: PlayerInfo) => {
-      console.log(`\n\n===============>\t player left your area\n`);
-      console.log(playerInfo);
+    this.socket.on('signInSuccess', (playerInfo: any) => {
+      this.CreateGame();
     })
   }
   
-  private CreateGame(playerInfo: any): void{
-    form.hidden = true;
-    if(!game){
-    game = new Phaser.Game(config);
-    }
+  private CreateGame(): void{
+    loginDiv.hidden = true;
+    config.scene = [new GameScene(socket)];
+    var game = new Phaser.Game(config);
   }
 }
 
-var socket = new ioService();
+
+var socket = io.connect();
+var loginService = new LoginService(socket);
 
 signInBtn.onclick = () => {
-  socket.SignIn();
+  loginService.SignIn();
 }
 signUpBtn.onclick = () => {
-  socket.SignUp();
+  loginService.SignUp();
 }
 
-form.onsubmit=function() {
-  return false;
-}
 

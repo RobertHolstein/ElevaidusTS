@@ -119,7 +119,10 @@ export class App {
     }
 
     private CreatePlayer(socket: socketIo.Socket, playerInfo: any): void {
-        let player = new Player(this.io, socket, this.db, playerInfo);
+        socket.emit('signInSuccess')
+        socket.on('gameReady', () =>{
+            let player = new Player(this.io, socket, this.db, playerInfo);
+        })
     }
 
     private dbConnect(): void {
