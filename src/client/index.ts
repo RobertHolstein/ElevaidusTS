@@ -1,8 +1,10 @@
 /// <reference path="./phaser.d.ts"/>
 
+
 import * as io from 'socket.io-client';
 import 'phaser';
 import { GameScene } from "./scenes/gameScene";
+import * as $ from "jquery";
 
 var signInUsername = document.getElementById('signInUsername') as HTMLInputElement;
 var signInPassword = document.getElementById('signInPassword') as HTMLInputElement;
@@ -13,8 +15,8 @@ var signUpBtn = document.getElementById('signUpBtn');
 const config: GameConfig = {
   title: "Elevaidus",
   version: "1.0",
-  width: 1280,
-  height: 1280,
+  width: 640,
+  height: 640,
   type: Phaser.AUTO,
   parent: "game",
   scene: [ ],
@@ -71,6 +73,7 @@ export class LoginService {
     loginDiv.hidden = true;
     config.scene = [new GameScene(socket)];
     var game = new Phaser.Game(config);
+    $('#GameContainer').show()
   }
 }
 

@@ -25,13 +25,13 @@ export class GameScene extends Phaser.Scene {
         const map = this.make.tilemap({key: 'map' });
         const tileset = map.addTilesetImage('tilesheet', 'tiles');
         map.layers.forEach(layer => {
-            map.createStaticLayer(layer.name, tileset, SHARED.MAPSTARTX, 0);
+            map.createStaticLayer(layer.name, tileset, CONST.MAPSTARTX, 0);
         });
         
         const zoneLetters = SHARED.ZONELTRS;
         var zones: any = [];
-        var zoneX = SHARED.MAPSTARTX;
-        var zoneY = SHARED.MAPSTARTY;
+        var zoneX = CONST.MAPSTARTX;
+        var zoneY = CONST.MAPSTARTY;
         for (let x = 0; x < zoneLetters.length; x++) {
             zones[x] = [];
             for (let y = 0; y < 5; y++) {
@@ -45,10 +45,10 @@ export class GameScene extends Phaser.Scene {
         }
 
         var label = this.add.text(0, 0, '', { font: "24px Arial Black" });
-        var leftMenu =this.add.graphics().lineStyle(1, 0xffffff).strokeRect(CONST.MenuLeftStartX,CONST.MenuLeftStartY,CONST.MenuLeftWidth,CONST.MenuLeftHeight);
+        //var leftMenu =this.add.graphics().lineStyle(1, 0xffffff).strokeRect(CONST.MenuLeftStartX,CONST.MenuLeftStartY,CONST.MenuLeftWidth,CONST.MenuLeftHeight);
         var rightMenu = new RightMenu(this, this.socket);
-        var bottomMenu =this.add.graphics().lineStyle(1, 0xffffff).strokeRect(0,640,1280,320);
-        var mapMenu = this.add.graphics().fillStyle(0xffffff);
+        //var bottomMenu =this.add.graphics().lineStyle(1, 0xffffff).strokeRect(0,640,1280,320);
+        //var mapMenu = this.add.graphics().fillStyle(0xffffff);
 
         
         
@@ -69,8 +69,8 @@ export class GameScene extends Phaser.Scene {
         this.player = new Player({
             socket: this.socket,
             scene: this,
-            x: SHARED.MAPSTARTX + SHARED.ZONESIZE/2,
-            y: SHARED.MAPSTARTY + SHARED.ZONESIZE/2,
+            x: CONST.MAPSTARTX + SHARED.ZONESIZE/2,
+            y: CONST.MAPSTARTY + SHARED.ZONESIZE/2,
             key: "charactor"
         });
         this.socket.emit('gameReady')
