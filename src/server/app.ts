@@ -82,7 +82,7 @@ export class App {
                     }else{
                         console.log(`\n\n===============>\t Player logging in\n`)
                         console.log(`===============>\t username: ${signInInfo.username}\n`)
-                        DisconnectPlayerIfLoggedIn(res.id, this.io)
+                        DisconnectPlayerIfLoggedIn(res[0].id, this.io)
                         this.CreatePlayer(socket, { player: res[0], isNew: false });
                     }
                 })

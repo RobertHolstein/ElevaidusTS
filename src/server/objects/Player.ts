@@ -48,7 +48,7 @@ export class Player {
             delete zones[this.zone].players[this.socket.id];
             this.socket.to(this.zone).emit('removePlayer', this.FrontendPlayerInfo());
             for (var i = 0; i < loggedInPlayers.length; i++) {
-                if (this.id = loggedInPlayers[i].id) { 
+                if (this.id === loggedInPlayers[i].id) { 
                     loggedInPlayers.splice(i, 1);
                     break;
                 }
@@ -194,8 +194,8 @@ export function IsPlayerLoggedIn(id:number): Boolean{
 }
 
 export function DisconnectPlayerIfLoggedIn(id:number, io: SocketIO.Server): void{
-    for (var i = 0; i < loggedInPlayers.length; i++) {
-        if (id = loggedInPlayers[i].id) { 
+    for (let i = 0; i < loggedInPlayers.length; i++) {
+        if (id === loggedInPlayers[i].id) { 
             io.sockets.connected[loggedInPlayers[i].socketId].emit('errorFromBackend', 'disconnected');
             io.sockets.connected[loggedInPlayers[i].socketId].disconnect();
             break;

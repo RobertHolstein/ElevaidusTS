@@ -166,7 +166,7 @@ var App = (function () {
                     else {
                         console.log("\n\n===============>\t Player logging in\n");
                         console.log("===============>\t username: " + signInInfo.username + "\n");
-                        Player_1.DisconnectPlayerIfLoggedIn(res.id, _this.io);
+                        Player_1.DisconnectPlayerIfLoggedIn(res[0].id, _this.io);
                         _this.CreatePlayer(socket, { player: res[0], isNew: false });
                     }
                 });
@@ -365,7 +365,7 @@ var Player = (function () {
             delete zones[_this.zone].players[_this.socket.id];
             _this.socket.to(_this.zone).emit('removePlayer', _this.FrontendPlayerInfo());
             for (var i = 0; i < loggedInPlayers.length; i++) {
-                if (_this.id = loggedInPlayers[i].id) {
+                if (_this.id === loggedInPlayers[i].id) {
                     loggedInPlayers.splice(i, 1);
                     break;
                 }
@@ -501,7 +501,7 @@ function IsPlayerLoggedIn(id) {
 exports.IsPlayerLoggedIn = IsPlayerLoggedIn;
 function DisconnectPlayerIfLoggedIn(id, io) {
     for (var i = 0; i < loggedInPlayers.length; i++) {
-        if (id = loggedInPlayers[i].id) {
+        if (id === loggedInPlayers[i].id) {
             io.sockets.connected[loggedInPlayers[i].socketId].emit('errorFromBackend', 'disconnected');
             io.sockets.connected[loggedInPlayers[i].socketId].disconnect();
             break;
