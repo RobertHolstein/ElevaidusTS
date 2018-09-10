@@ -13,6 +13,8 @@ SHARED.ZONES.forEach(zone => {
 
 const playerClasses: Array<PlayerClass> = GetPlayerClasses();
 
+var loggedInPlayers: PlayerInfo[] = [];
+
 export class Player {
     private io: SocketIO.Server;
     private socket: SocketIO.Socket;
@@ -45,7 +47,18 @@ export class Player {
             console.log(`\n\n===============>\t client disconnected\n`);
             delete zones[this.zone].players[this.socket.id];
             this.socket.to(this.zone).emit('removePlayer', this.FrontendPlayerInfo());
+            for (var i = 0; i < loggedInPlayers.length; i++) {
+                if (this.id = loggedInPlayers[i].id) { 
+                    loggedInPlayers.splice(i, 1);
+                    break;
+                }
+            }
         });
+        this.socket.on('chat', (msg: string) =>{
+            if(msg){
+                this.io.in(this.zone).emit('chat',this.username, msg);
+            }
+        })
     }
 
     private SetPlayerInfo(playerInfo: any): void {
@@ -65,8 +78,10 @@ export class Player {
         this.Join();
     }
 
-    private Join(): void {        
-        this.socket.emit('join', this.FrontendPlayerInfo());
+    private Join(): void {    
+        var frontEndInfo = this.FrontendPlayerInfo()
+        loggedInPlayers.push(frontEndInfo);
+        this.socket.emit('join', frontEndInfo);
         this.JoinNewArea(this.zone, true);
     }
 
@@ -163,9 +178,29 @@ export class Player {
     PlayerUpdate(data: any){
         
     }
-
-
 }
 
+export function GetLoggedInUsers(): PlayerInfo[]{
+    return loggedInPlayers;
+}
+
+export function IsPlayerLoggedIn(id:number): Boolean{
+    for (var i = 0; i < loggedInPlayers.length; i++) {
+        if (id = loggedInPlayers[i].id) { 
+            return true;
+        }
+    }
+    return false;
+}
+
+export function DisconnectPlayerIfLoggedIn(id:number, io: SocketIO.Server): void{
+    for (var i = 0; i < loggedInPlayers.length; i++) {
+        if (id = loggedInPlayers[i].id) { 
+            io.sockets.connected[loggedInPlayers[i].socketId].emit('errorFromBackend', 'disconnected');
+            io.sockets.connected[loggedInPlayers[i].socketId].disconnect();
+            break;
+        }
+    }
+}
 
 

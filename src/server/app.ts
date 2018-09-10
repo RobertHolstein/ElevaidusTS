@@ -7,17 +7,16 @@ import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
 import * as path from 'path';
-import { Player } from './objects/Player'
+import { Player, DisconnectPlayerIfLoggedIn } from './objects/Player'
 
 
 export class App {
-    public static readonly PORT:number = 8080;
-    public app: express.Application;
+    private app: express.Application;
     private server: Server;
-    public io: SocketIO.Server;
+    private io: SocketIO.Server;
     private port: string | number;
-    public db: mysql.Pool;
-    public zones: {}[];
+    private db: mysql.Pool;
+    private zones: {}[];
     private dbConfig = {
         host        : CONST.HOST,
         user        : CONST.DBUSER,
@@ -83,7 +82,7 @@ export class App {
                     }else{
                         console.log(`\n\n===============>\t Player logging in\n`)
                         console.log(`===============>\t username: ${signInInfo.username}\n`)
-                        console.log(`===============>\t password: ${signInInfo.password}\n`)
+                        DisconnectPlayerIfLoggedIn(res.id, this.io)
                         this.CreatePlayer(socket, { player: res[0], isNew: false });
                     }
                 })

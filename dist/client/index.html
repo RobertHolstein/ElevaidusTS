@@ -36,13 +36,17 @@
           </div>
           <div class="row" style="height:65%">
             <div class="col-sm">
-              <div class="row" style="height:85%"></div>
+              <div class="row scrollbar scrollbar-black bordered-black square" style="height:361.63px; overflow-y: scroll;">
+                <div id="chatBody" class="col-sm" style="padding-top:15px;">
+
+                </div>
+              </div>
               <div class="row align-items-end" style="height:15%">
                 <div class="col-sm">
                   <div class="input-group mb-3">
-                      <input type="text" class="form-control" placeholder="chat" aria-label="chat" aria-describedby="basic-addon2">
+                      <input id="chatInput" type="text" class="form-control" placeholder="chat" aria-label="chat" aria-describedby="basic-addon2">
                       <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button">SEND</button>
+                        <button id="chatBtn" class="btn btn-outline-secondary" type="button">SEND</button>
                       </div>
                   </div>
                 </div>

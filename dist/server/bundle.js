@@ -166,7 +166,7 @@ var App = (function () {
                     else {
                         console.log("\n\n===============>\t Player logging in\n");
                         console.log("===============>\t username: " + signInInfo.username + "\n");
-                        console.log("===============>\t password: " + signInInfo.password + "\n");
+                        Player_1.DisconnectPlayerIfLoggedIn(res.id, _this.io);
                         _this.CreatePlayer(socket, { player: res[0], isNew: false });
                     }
                 });
@@ -241,7 +241,6 @@ var App = (function () {
             }
         });
     };
-    App.PORT = 8080;
     return App;
 }());
 exports.App = App;
@@ -342,6 +341,7 @@ const_1.SHARED.ZONES.forEach(function (zone) {
     zones[zone].players = [];
 });
 var playerClasses = PlayerClass_1.GetPlayerClasses();
+var loggedInPlayers = [];
 var Player = (function () {
     function Player(io, socket, db, playerInfo) {
         this.io = io;
@@ -364,6 +364,17 @@ var Player = (function () {
             console.log("\n\n===============>\t client disconnected\n");
             delete zones[_this.zone].players[_this.socket.id];
             _this.socket.to(_this.zone).emit('removePlayer', _this.FrontendPlayerInfo());
+            for (var i = 0; i < loggedInPlayers.length; i++) {
+                if (_this.id = loggedInPlayers[i].id) {
+                    loggedInPlayers.splice(i, 1);
+                    break;
+                }
+            }
+        });
+        this.socket.on('chat', function (msg) {
+            if (msg) {
+                _this.io.in(_this.zone).emit('chat', _this.username, msg);
+            }
         });
     };
     Player.prototype.SetPlayerInfo = function (playerInfo) {
@@ -382,7 +393,9 @@ var Player = (function () {
         this.Join();
     };
     Player.prototype.Join = function () {
-        this.socket.emit('join', this.FrontendPlayerInfo());
+        var frontEndInfo = this.FrontendPlayerInfo();
+        loggedInPlayers.push(frontEndInfo);
+        this.socket.emit('join', frontEndInfo);
         this.JoinNewArea(this.zone, true);
     };
     Player.prototype.JoinNewArea = function (newZone, newlyJoin) {
@@ -473,6 +486,29 @@ var Player = (function () {
     return Player;
 }());
 exports.Player = Player;
+function GetLoggedInUsers() {
+    return loggedInPlayers;
+}
+exports.GetLoggedInUsers = GetLoggedInUsers;
+function IsPlayerLoggedIn(id) {
+    for (var i = 0; i < loggedInPlayers.length; i++) {
+        if (id = loggedInPlayers[i].id) {
+            return true;
+        }
+    }
+    return false;
+}
+exports.IsPlayerLoggedIn = IsPlayerLoggedIn;
+function DisconnectPlayerIfLoggedIn(id, io) {
+    for (var i = 0; i < loggedInPlayers.length; i++) {
+        if (id = loggedInPlayers[i].id) {
+            io.sockets.connected[loggedInPlayers[i].socketId].emit('errorFromBackend', 'disconnected');
+            io.sockets.connected[loggedInPlayers[i].socketId].disconnect();
+            break;
+        }
+    }
+}
+exports.DisconnectPlayerIfLoggedIn = DisconnectPlayerIfLoggedIn;
 
 
 /***/ }),
