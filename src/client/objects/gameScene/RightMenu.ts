@@ -77,7 +77,7 @@ export class RightMenu {
             $('#chatBody').append(`
                 <div class="row">
                     <div class="col-sm">
-                    <p class="addBorder" style="padding-left:15px;">${username}<br/>${msg}</p>
+                    <p class="addBorder" style="padding-left:15px;color:white;">${username}<br/>${msg}</p>
                     </div>
                 </div>`
             );
