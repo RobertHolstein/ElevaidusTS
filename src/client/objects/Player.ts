@@ -1,14 +1,14 @@
-
-
 export class Player extends Phaser.GameObjects.Sprite {
-    socket: SocketIOClient.Socket;
     mouse: Phaser.Input.Pointer;
     constructor(params: any){
         super(params.scene, params.x, params.y, params.key);
-        this.socket = params.socket;
-        this.Listen();
         this.mouse = this.scene.input.activePointer;
-        params.scene.add.existing(this);
+    }
+
+    JoinPlayerToScene(scene: Phaser.Scene, cords: {x:number,y:number}): void {
+        this.x = cords.x;
+        this.y = cords.y;
+        scene.add.existing(this);
     }
 
     CheckPlayerMovement(): void {
@@ -16,11 +16,5 @@ export class Player extends Phaser.GameObjects.Sprite {
             console.log(this.mouse.x);
             console.log(this.mouse.y);
         }
-
     }
-
-    private Listen(): void {
-
-    }
-
 }
