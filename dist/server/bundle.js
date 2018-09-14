@@ -274,31 +274,31 @@ exports.CONST = {
         { name: 'craftsmen', farming: 0, mining: 5, healing: 0, fighting: 0, crafting: 25 }
     ],
     ZONES: [
-        { name: 'a1' },
-        { name: 'a2' },
-        { name: 'a3' },
-        { name: 'a4' },
-        { name: 'a5' },
-        { name: 'b1' },
-        { name: 'b2' },
-        { name: 'b3' },
-        { name: 'b4' },
-        { name: 'b5' },
-        { name: 'c1' },
-        { name: 'c2' },
-        { name: 'c3' },
-        { name: 'c4' },
-        { name: 'c5' },
-        { name: 'd1' },
-        { name: 'd2' },
-        { name: 'd3' },
-        { name: 'd4' },
-        { name: 'd5' },
-        { name: 'e1' },
-        { name: 'e2' },
-        { name: 'e3' },
-        { name: 'e4' },
-        { name: 'e5' },
+        { name: 'a1', x: 0, y: 0 },
+        { name: 'a2', x: 0, y: 1 },
+        { name: 'a3', x: 0, y: 2 },
+        { name: 'a4', x: 0, y: 3 },
+        { name: 'a5', x: 0, y: 4 },
+        { name: 'b1', x: 1, y: 0 },
+        { name: 'b2', x: 1, y: 1 },
+        { name: 'b3', x: 1, y: 2 },
+        { name: 'b4', x: 1, y: 3 },
+        { name: 'b5', x: 1, y: 4 },
+        { name: 'c1', x: 2, y: 0 },
+        { name: 'c2', x: 2, y: 1 },
+        { name: 'c3', x: 2, y: 2 },
+        { name: 'c4', x: 2, y: 3 },
+        { name: 'c5', x: 2, y: 4 },
+        { name: 'd1', x: 3, y: 0 },
+        { name: 'd2', x: 3, y: 1 },
+        { name: 'd3', x: 3, y: 2 },
+        { name: 'd4', x: 3, y: 3 },
+        { name: 'd5', x: 3, y: 4 },
+        { name: 'e1', x: 4, y: 0 },
+        { name: 'e2', x: 4, y: 1 },
+        { name: 'e3', x: 4, y: 2 },
+        { name: 'e4', x: 4, y: 3 },
+        { name: 'e5', x: 4, y: 4 },
     ]
 };
 
@@ -331,15 +331,11 @@ var app = new app_1.App();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var const_1 = __webpack_require__(/*! ../../shared/const */ "./src/shared/const.ts");
-var const_2 = __webpack_require__(/*! ../const/const */ "./src/server/const/const.ts");
+var const_1 = __webpack_require__(/*! ../const/const */ "./src/server/const/const.ts");
 var Skill_1 = __webpack_require__(/*! ./Skill */ "./src/server/objects/Skill.ts");
+var Zone_1 = __webpack_require__(/*! ./Zone */ "./src/server/objects/Zone.ts");
 var PlayerClass_1 = __webpack_require__(/*! ./PlayerClass */ "./src/server/objects/PlayerClass.ts");
-var zones = [];
-const_1.SHARED.ZONES.forEach(function (zone) {
-    zones[zone] = {};
-    zones[zone].players = [];
-});
+var zones = Zone_1.GetZones();
 var playerClasses = PlayerClass_1.GetPlayerClasses();
 var loggedInPlayers = [];
 var Player = (function () {
@@ -362,7 +358,17 @@ var Player = (function () {
         var _this = this;
         this.socket.on('disconnect', function () {
             console.log("\n\n===============>\t client disconnected\n");
-            delete zones[_this.zone].players[_this.socket.id];
+            for (var i_1 = 0; i_1 < zones.length; i_1++) {
+                if (zones[i_1].name === _this.zone) {
+                    for (var j = 0; j < zones[i_1].players.length; j++) {
+                        if (zones[i_1].players[j].socketId === _this.socket.id) {
+                            delete zones[i_1].players[j];
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
             _this.socket.to(_this.zone).emit('removePlayer', _this.FrontendPlayerInfo());
             for (var i = 0; i < loggedInPlayers.length; i++) {
                 if (_this.id === loggedInPlayers[i].id) {
@@ -387,8 +393,8 @@ var Player = (function () {
     Player.prototype.CreateNewPlayer = function () {
         this.GenerateClass();
         this.GenerateSkills();
-        this.zone = const_2.CONST.STARTINGZONE;
-        this.health = const_2.CONST.STARTINGHEALTH;
+        this.zone = const_1.CONST.STARTINGZONE;
+        this.health = const_1.CONST.STARTINGHEALTH;
         this.saveInDatabase();
         this.Join();
     };
@@ -405,14 +411,18 @@ var Player = (function () {
         }
         this.zone = newZone;
         this.socket.join(this.zone);
-        var playersInArea = [];
-        zones[this.zone].players[this.socket.id] = this.FrontendPlayerInfo();
-        for (var p in zones[this.zone].players) {
-            playersInArea.push(zones[this.zone].players[p]);
+        for (var i = 0; i < zones.length; i++) {
+            if (zones[i].name === newZone) {
+                zones[i].players.push(this.FrontendPlayerInfo());
+                for (var j = 0; j < zones[i].players.length; j++) {
+                    if (zones[i].players[j].socketId === this.socket.id) {
+                        this.socket.emit('currentPlayers', zones[i].players);
+                        this.socket.to(this.zone).emit('addPlayer', zones[i].players[j]);
+                        break;
+                    }
+                }
+            }
         }
-        ;
-        this.socket.emit('currentPlayers', playersInArea);
-        this.socket.to(this.zone).emit('addPlayer', zones[this.zone].players[this.socket.id]);
     };
     Player.prototype.FrontendPlayerInfo = function () {
         var player = {
@@ -582,40 +592,35 @@ exports.GetSkills = GetSkills;
 
 /***/ }),
 
-/***/ "./src/shared/const.ts":
-/*!*****************************!*\
-  !*** ./src/shared/const.ts ***!
-  \*****************************/
+/***/ "./src/server/objects/Zone.ts":
+/*!************************************!*\
+  !*** ./src/server/objects/Zone.ts ***!
+  \************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SHARED = {
-    ZONELTRS: ['a', 'b', 'c', 'd', 'e'],
-    ZONES: ['a1', 'a2', 'a3', 'a4', 'a5', 'b1', 'b2', 'b3', 'b4', 'b5', 'c1', 'c2', 'c3', 'c4', 'c5', 'd1', 'd2', 'd3', 'd4', 'd5', 'e1', 'e2', 'e3', 'e4', 'e5',],
-    ZONESIZE: 128,
-};
-function Resize() {
-    var canvas = this.game.canvas, width = window.innerWidth, height = window.innerHeight;
-    var wratio = width / height, ratio = canvas.width / canvas.height;
-    if (wratio < ratio) {
-        canvas.style.width = width + "px";
-        canvas.style.height = (width / ratio) + "px";
+var const_1 = __webpack_require__(/*! ../const/const */ "./src/server/const/const.ts");
+var Zone = (function () {
+    function Zone(name, x, y) {
+        this.name = name;
+        this.x = x;
+        this.y = y;
+        this.players = [];
     }
-    else {
-        canvas.style.width = (height * ratio) + "px";
-        canvas.style.height = height + "px";
-    }
-}
-exports.Resize = Resize;
-var PlayerInfo = (function () {
-    function PlayerInfo() {
-    }
-    return PlayerInfo;
+    return Zone;
 }());
-exports.PlayerInfo = PlayerInfo;
+exports.Zone = Zone;
+function GetZones() {
+    var zones = new Array();
+    const_1.CONST.ZONES.forEach(function (i) {
+        zones.push(new Zone(i.name, i.x, i.y));
+    });
+    return zones;
+}
+exports.GetZones = GetZones;
 
 
 /***/ }),

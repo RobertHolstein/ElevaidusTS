@@ -1,4 +1,5 @@
-import { PlayerInfo } from "../../../shared/const"
+import { PlayerInfo, SHARED } from "../../../shared/const"
+import { CONST } from "../../const/const";
 import {GameScene} from "../../scenes/gameScene"
 import { Player } from "../../objects/Player"; 
 import * as RightMenu from './RightMenu'
@@ -35,10 +36,13 @@ export class Listener {
         // joins current player to game in frontend
         //
         this.socket.on('join', (player:PlayerInfo) => {
-            // TODO: rethink how zones are named
-            //this.scene.add.zone(1,1,1,1).name
-            //this.scene.zones[]
-            this.player.JoinPlayerToScene(this.scene, {x:1,y:1})
+            for (let i = 0; i < CONST.ZONES.length; i++) {
+                if(player.zone === CONST.ZONES[i].name){
+                    var zone = this.scene.zones[CONST.ZONES[i].x][CONST.ZONES[i].y] as Phaser.GameObjects.Zone;
+                    this.player.JoinPlayerToScene(this.scene, {x:zone.x + CONST.ZONESIZE/2 ,y:zone.y + CONST.ZONESIZE/2})
+                    break;
+                }
+            }
         });
 
         //
@@ -71,10 +75,5 @@ export class Listener {
               $('#chatBtn').click();
             }
         });
-
-        //
-        //
-        //
-
     }
 }

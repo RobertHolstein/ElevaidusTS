@@ -22,12 +22,6 @@ export function AddNewPlayerToPlayersMenu(player: PlayerInfo) {
 }
 
 export function RemovePlayerFromPlayersMenu(player:PlayerInfo) {
-    for (var i = 0; i < this.players.length; i++) {
-        if (player.socketId = this.players[i].socketId) { 
-            this.players.splice(i, 1);
-            break;
-        }
-    }
     $(`#${player.socketId}`).remove();
 }
 

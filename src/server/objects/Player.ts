@@ -2,14 +2,11 @@ import * as mysql from 'mysql';
 import { PlayerInfo, SHARED } from "../../shared/const"
 import { CONST } from '../const/const';
 import {Skill, GetSkills} from './Skill';
+import {Zone, GetZones} from './Zone'
 import {PlayerClass, GetPlayerClasses} from './PlayerClass';
 
 // zones, not sure where else to put them atm
-var zones: any = [];
-SHARED.ZONES.forEach(zone => {
-    zones[zone] = {};
-    zones[zone].players = [];
-});
+var zones: Zone[] = GetZones();
 
 const playerClasses: Array<PlayerClass> = GetPlayerClasses();
 
@@ -45,7 +42,19 @@ export class Player {
     private Listen(): void {
         this.socket.on('disconnect', () => {
             console.log(`\n\n===============>\t client disconnected\n`);
-            delete zones[this.zone].players[this.socket.id];
+            // FIXME: players not being removed from players list
+            for (let i = 0; i < zones.length; i++) {
+                if(zones[i].name === this.zone){
+                    for (let j = 0; j < zones[i].players.length; j++) {
+                        if (zones[i].players[j].socketId === this.socket.id) {
+                            delete zones[i].players[j];
+                            break;
+                        }                
+                    }
+                    break;
+                }
+            }
+            
             this.socket.to(this.zone).emit('removePlayer', this.FrontendPlayerInfo());
             for (var i = 0; i < loggedInPlayers.length; i++) {
                 if (this.id === loggedInPlayers[i].id) { 
@@ -93,13 +102,19 @@ export class Player {
         this.zone = newZone;
         this.socket.join(this.zone);
         //TODO: save new area in database
-        let playersInArea: PlayerInfo[] = []
-        zones[this.zone].players[this.socket.id] = this.FrontendPlayerInfo();
-        for(let p in zones[this.zone].players){
-            playersInArea.push(zones[this.zone].players[p])
-        };
-        this.socket.emit('currentPlayers', playersInArea);
-        this.socket.to(this.zone).emit('addPlayer', zones[this.zone].players[this.socket.id]);
+        // FIXME: TypeError: Cannot read property 'socketId' of undefined
+        for (let i = 0; i < zones.length; i++) {
+            if (zones[i].name === newZone) {
+                zones[i].players.push(this.FrontendPlayerInfo());
+                for (let j = 0; j < zones[i].players.length; j++) {
+                    if(zones[i].players[j].socketId === this.socket.id){
+                        this.socket.emit('currentPlayers', zones[i].players);
+                        this.socket.to(this.zone).emit('addPlayer', zones[i].players[j]);
+                        break;
+                    }
+                }
+            }            
+        }        
     }
 
     private FrontendPlayerInfo(): PlayerInfo {
