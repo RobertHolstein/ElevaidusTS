@@ -18,8 +18,14 @@ export class PlayerInfo {
     id: number;
     socketId: string;
     username: string;
-    skills: {}[];
+    skills: Skill[];
     class: string;
     zone: string;
     health: number;
+}
+
+export class Skill {
+    name: string;
+    level: number;
+    progress: number;
 }

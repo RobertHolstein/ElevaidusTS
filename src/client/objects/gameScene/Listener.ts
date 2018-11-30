@@ -3,6 +3,7 @@ import { CONST } from "../../const/const";
 import {GameScene} from "../../scenes/gameScene"
 import { Player } from "../../objects/Player"; 
 import * as RightMenu from './RightMenu'
+import * as LeftMenu from './LeftMenu'
 //import { LightMenu } from './LightMenu'
 
 export class Listener {
@@ -40,6 +41,7 @@ export class Listener {
                 if(player.zone === CONST.ZONES[i].name){
                     var zone = this.scene.zones[CONST.ZONES[i].x][CONST.ZONES[i].y] as Phaser.GameObjects.Zone;
                     this.player.JoinPlayerToScene(this.scene, {x:zone.x + CONST.ZONESIZE/2 ,y:zone.y + CONST.ZONESIZE/2})
+                    LeftMenu.AddPlayerInfo(player);
                     break;
                 }
             }
