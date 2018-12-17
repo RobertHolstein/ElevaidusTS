@@ -19,6 +19,7 @@ export class PlayerInfo {
     socketId: string;
     username: string;
     skills: Skill[];
+    activeSkill: string;
     class: string;
     zone: string;
     health: number;

@@ -15,6 +15,7 @@ export class Listener {
         this.scene = scene;
         this.player = scene.player;
         this.Listen();
+        LeftMenu.ChangeActiveSkill(scene.socket);
     }
 
     private Listen():void {

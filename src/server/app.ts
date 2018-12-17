@@ -131,7 +131,7 @@ export class App {
                 throw err
             }else {
                 console.log(`\n\n===============>\t ${CONST.DATABASE} database connected\n`);
-                let sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, crafting int, PRIMARY KEY (id), UNIQUE KEY username (username))"
+                let sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, crafting int, activeSkill VARCHAR(30), lastCheckIn datetime, PRIMARY KEY (id), UNIQUE KEY username (username))"
                 db.query(sql, (err, result) => {
                     if (err) {
                         throw err

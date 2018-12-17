@@ -218,7 +218,7 @@ var App = (function () {
             }
             else {
                 console.log("\n\n===============>\t " + const_1.CONST.DATABASE + " database connected\n");
-                var sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, crafting int, PRIMARY KEY (id), UNIQUE KEY username (username))";
+                var sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, crafting int, activeSkill VARCHAR(30), lastCheckIn datetime, PRIMARY KEY (id), UNIQUE KEY username (username))";
                 db.query(sql, function (err, result) {
                     if (err) {
                         throw err;
@@ -382,12 +382,22 @@ var Player = (function () {
                 _this.io.in(_this.zone).emit('chat', _this.username, msg);
             }
         });
+        this.socket.on('ChangeActiveSkill', function (skill) {
+            var findSkill = _this.skills.find(function (i) { return i.name === skill; });
+            if (findSkill) {
+                _this.activeSkill = findSkill.name;
+            }
+            _this.UpdatePlayer();
+        });
     };
     Player.prototype.SetPlayerInfo = function (playerInfo) {
         this.SetSkills(playerInfo);
         this.class = playerInfo.class;
         this.zone = playerInfo.zone;
         this.health = playerInfo.health;
+        this.activeSkill = playerInfo.activeSkill;
+        this.lastCheckIn = playerInfo.lastCheckIn;
+        this.UpdatePlayer();
         this.Join();
     };
     Player.prototype.CreateNewPlayer = function () {
@@ -395,7 +405,9 @@ var Player = (function () {
         this.GenerateSkills();
         this.zone = const_1.CONST.STARTINGZONE;
         this.health = const_1.CONST.STARTINGHEALTH;
-        this.saveInDatabase();
+        this.lastCheckIn = new Date();
+        this.activeSkill = "mining";
+        this.SaveInDatabase();
         this.Join();
     };
     Player.prototype.Join = function () {
@@ -414,6 +426,7 @@ var Player = (function () {
         for (var i = 0; i < zones.length; i++) {
             if (zones[i].name === newZone) {
                 zones[i].players.push(this.FrontendPlayerInfo());
+                zones[i].players = zones[i].players.filter(function (el) { return el != null; });
                 for (var j = 0; j < zones[i].players.length; j++) {
                     if (zones[i].players[j].socketId === this.socket.id) {
                         this.socket.emit('currentPlayers', zones[i].players);
@@ -421,8 +434,12 @@ var Player = (function () {
                         break;
                     }
                 }
+                break;
             }
         }
+    };
+    Player.prototype.UpdatePlayer = function () {
+        this.SaveInDatabase();
     };
     Player.prototype.FrontendPlayerInfo = function () {
         var player = {
@@ -430,9 +447,10 @@ var Player = (function () {
             socketId: this.socket.id,
             username: this.username,
             skills: this.skills,
+            activeSkill: this.activeSkill,
             class: this.class,
             zone: this.zone,
-            health: this.health
+            health: this.health,
         };
         return player;
     };
@@ -469,9 +487,9 @@ var Player = (function () {
             i.level = Math.floor(Math.random() * 26);
         });
     };
-    Player.prototype.saveInDatabase = function () {
+    Player.prototype.SaveInDatabase = function () {
         var _this = this;
-        var sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ?, crafting = ? WHERE id = ?';
+        var sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ?, crafting = ?, activeSkill = ?, lastCheckIn = ? WHERE id = ?';
         this.db.query(sql, [
             this.zone,
             this.health,
@@ -481,6 +499,8 @@ var Player = (function () {
             this.skills.find(function (i) { return i.name === 'healing'; }).level,
             this.skills.find(function (i) { return i.name === 'fighting'; }).level,
             this.skills.find(function (i) { return i.name === 'crafting'; }).level,
+            this.activeSkill,
+            this.lastCheckIn,
             this.id
         ], function (err, res) {
             if (err) {

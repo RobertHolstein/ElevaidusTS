@@ -5,6 +5,7 @@ export function AddPlayerInfo(player:PlayerInfo) {
     $('#playerSkills').append(player.skills.toString());
     $('#playerClass').append(player.class);
     $('#playerZone').append(player.zone);
+    $('#activeSkill').append(player.activeSkill);
     $('#playerHealth').append(player.health.toString());
     player.skills.forEach(i => {
         $('#skillTable').append(`
@@ -15,5 +16,19 @@ export function AddPlayerInfo(player:PlayerInfo) {
     </tr>
     `)
     });
-    
+}
+
+export function ChangeActiveSkill(socket: SocketIOClient.Socket) {
+    $('#farmingBtn').on('click', () =>{
+        socket.emit('ChangeActiveSkill', 'farming');
+    });
+    $('#miningBtn').on('click', () =>{
+        socket.emit('ChangeActiveSkill', 'mining');
+    });
+    $('#fightingBtn').on('click', () =>{
+        socket.emit('ChangeActiveSkill', 'fighting');
+    });
+    $('#craftingBtn').on('click', () =>{
+        socket.emit('ChangeActiveSkill', 'crafting');
+    });
 }

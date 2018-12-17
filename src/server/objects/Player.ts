@@ -18,10 +18,12 @@ export class Player {
     private db: mysql.Pool;
     private class: string;
     private skills: Skill[]; 
+    private activeSkill: string; 
     private id: number;
     private username: string;
     private zone: string;
     private health: number;
+    private lastCheckIn: Date;
 
 
     constructor(io: SocketIO.Server, socket: SocketIO.Socket, db: mysql.Pool, playerInfo: any){
@@ -42,14 +44,13 @@ export class Player {
     private Listen(): void {
         this.socket.on('disconnect', () => {
             console.log(`\n\n===============>\t client disconnected\n`);
-            // FIXME: players not being removed from players list
             for (let i = 0; i < zones.length; i++) {
                 if(zones[i].name === this.zone){
                     for (let j = 0; j < zones[i].players.length; j++) {
                         if (zones[i].players[j].socketId === this.socket.id) {
                             delete zones[i].players[j];
                             break;
-                        }                
+                        }
                     }
                     break;
                 }
@@ -67,7 +68,16 @@ export class Player {
             if(msg){
                 this.io.in(this.zone).emit('chat',this.username, msg);
             }
-        })
+        });
+        this.socket.on('ChangeActiveSkill', (skill: string) => {
+            var findSkill = this.skills.find(i => i.name === skill)
+            if (findSkill) {
+                this.activeSkill = findSkill.name;
+            }
+            this.UpdatePlayer();
+        });
+
+
     }
 
     private SetPlayerInfo(playerInfo: any): void {
@@ -75,6 +85,9 @@ export class Player {
         this.class = playerInfo.class;
         this.zone = playerInfo.zone;
         this.health = playerInfo.health;
+        this.activeSkill = playerInfo.activeSkill;
+        this.lastCheckIn = playerInfo.lastCheckIn;
+        this.UpdatePlayer();
         this.Join();
     }
 
@@ -83,7 +96,9 @@ export class Player {
         this.GenerateSkills();
         this.zone = CONST.STARTINGZONE;
         this.health = CONST.STARTINGHEALTH;
-        this.saveInDatabase();
+        this.lastCheckIn = new Date();
+        this.activeSkill = "mining";
+        this.SaveInDatabase();
         this.Join();
     }
 
@@ -102,10 +117,10 @@ export class Player {
         this.zone = newZone;
         this.socket.join(this.zone);
         //TODO: save new area in database
-        // FIXME: TypeError: Cannot read property 'socketId' of undefined
         for (let i = 0; i < zones.length; i++) {
             if (zones[i].name === newZone) {
                 zones[i].players.push(this.FrontendPlayerInfo());
+                zones[i].players = zones[i].players.filter(function (el) { return el != null; }); // Removes undefined 
                 for (let j = 0; j < zones[i].players.length; j++) {
                     if(zones[i].players[j].socketId === this.socket.id){
                         this.socket.emit('currentPlayers', zones[i].players);
@@ -113,8 +128,14 @@ export class Player {
                         break;
                     }
                 }
+                break;
             }            
         }        
+    }
+
+    private UpdatePlayer(): void {
+        this.SaveInDatabase();
+        // TODO: Emit to frontend updated player info
     }
 
     private FrontendPlayerInfo(): PlayerInfo {
@@ -123,9 +144,10 @@ export class Player {
             socketId: this.socket.id,
             username: this.username,
             skills: this.skills,
+            activeSkill: this.activeSkill,
             class: this.class,
             zone: this.zone,
-            health: this.health
+            health: this.health,
         }
         return player;
     }
@@ -166,8 +188,8 @@ export class Player {
         });
     }
 
-    private saveInDatabase(): void {
-        let sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ?, crafting = ? WHERE id = ?';
+    private SaveInDatabase(): void {
+        let sql = 'UPDATE player SET zone = ?, health = ?, class = ?, farming = ?, mining = ?, healing = ?, fighting = ?, crafting = ?, activeSkill = ?, lastCheckIn = ? WHERE id = ?';
         this.db.query(sql, 
             [
                 this.zone,
@@ -178,6 +200,8 @@ export class Player {
                 this.skills.find(i => i.name === 'healing').level,
                 this.skills.find(i => i.name === 'fighting').level,
                 this.skills.find(i => i.name === 'crafting').level,
+                this.activeSkill,
+                this.lastCheckIn,
                 this.id
             ],
             (err, res) =>{
