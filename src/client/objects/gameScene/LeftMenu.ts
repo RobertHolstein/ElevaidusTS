@@ -1,20 +1,20 @@
 import { PlayerInfo } from "../../../shared/const";
 
 export function AddPlayerInfo(player:PlayerInfo) {
-    $('#playerUsername').append(player.username);
-    $('#playerSkills').append(player.skills.toString());
-    $('#playerClass').append(player.class);
-    $('#playerZone').append(player.zone);
-    $('#activeSkill').append(player.activeSkill);
-    $('#playerHealth').append(player.health.toString());
+    $('#playerUsername').html(player.username);
+    $('#playerSkills').html(player.skills.toString());
+    $('#playerClass').html(player.class);
+    $('#playerZone').html(player.zone);
+    $('#activeSkill').html(player.activeSkill);
+    $('#playerHealth').html(player.health.toString());
     player.skills.forEach(i => {
         $('#skillTable').append(`
-    <tr>
-        <td ${i.name}Name>${i.name}</td>
-        <td id="${i.name}Level">${i.level}</td>
-        <td id="${i.name}Progress">${i.progress}</td>
-    </tr>
-    `)
+        <tr>
+            <td ${i.name}Name>${i.name}</td>
+            <td id="${i.name}Level">${Math.floor(i.level)}</td>
+            <td id="${i.name}Progress">${i.progress}</td>
+        </tr>
+        `)
     });
 }
 
@@ -30,5 +30,20 @@ export function ChangeActiveSkill(socket: SocketIOClient.Socket) {
     });
     $('#craftingBtn').on('click', () =>{
         socket.emit('ChangeActiveSkill', 'crafting');
+    });
+}
+
+export function UpdatePlayer(player: PlayerInfo){
+    $('#playerUsername').html(player.username);
+    $('#playerClass').html(player.class);
+    $('#playerZone').html(player.zone);
+    $('#activeSkill').html(player.activeSkill);
+    $('#playerHealth').html(player.health.toString());
+    player.skills.forEach(i => {
+        player.skills.forEach(i => {
+            $(`#${i.name}Level`).html(`${Math.floor(i.level)}`);
+            $(`#${i.progress}Progress`).html(`${i.progress}`);
+         });
+        
     });
 }

@@ -218,7 +218,7 @@ var App = (function () {
             }
             else {
                 console.log("\n\n===============>\t " + const_1.CONST.DATABASE + " database connected\n");
-                var sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming int, mining int, fighting int, healing int, crafting int, activeSkill VARCHAR(30), lastCheckIn datetime, PRIMARY KEY (id), UNIQUE KEY username (username))";
+                var sql = "CREATE TABLE IF NOT EXISTS Player(id int AUTO_INCREMENT, username VARCHAR(30), password VARCHAR(255), zone VARCHAR(30), health int, class VARCHAR(30), farming long, mining long, fighting long, healing long, crafting long, activeSkill VARCHAR(30), lastCheckIn datetime, PRIMARY KEY (id), UNIQUE KEY username (username))";
                 db.query(sql, function (err, result) {
                     if (err) {
                         throw err;
@@ -397,7 +397,8 @@ var Player = (function () {
         this.health = playerInfo.health;
         this.activeSkill = playerInfo.activeSkill;
         this.lastCheckIn = playerInfo.lastCheckIn;
-        this.UpdatePlayer();
+        this.UpdateSkill();
+        this.SaveInDatabase();
         this.Join();
     };
     Player.prototype.CreateNewPlayer = function () {
@@ -439,7 +440,21 @@ var Player = (function () {
         }
     };
     Player.prototype.UpdatePlayer = function () {
+        this.UpdateSkill();
         this.SaveInDatabase();
+        var player = this.FrontendPlayerInfo();
+        this.socket.emit('updatePlayer', player);
+    };
+    Player.prototype.UpdateSkill = function () {
+        var _this = this;
+        var timeNow = new Date;
+        var hours = (Math.abs(timeNow.getTime() - this.lastCheckIn.getTime()) / 3600000);
+        if (hours > 0.1) {
+            this.lastCheckIn = timeNow;
+            var skill = this.skills.find(function (i) { return i.name === _this.activeSkill; });
+            skill.level = (Math.round((skill.level + hours / 100) * 1000) / 1000);
+            skill.progress = Math.round((skill.level % 1) * 100);
+        }
     };
     Player.prototype.FrontendPlayerInfo = function () {
         var player = {
@@ -476,6 +491,7 @@ var Player = (function () {
             for (var prop in playerInfo) {
                 if (prop === this.skills[s].name) {
                     this.skills[s].level = playerInfo[prop];
+                    this.skills[s].progress = Math.round((this.skills[s].level % 1) * 100);
                     break;
                 }
             }
@@ -510,8 +526,6 @@ var Player = (function () {
                 console.log("\n\n===============>\t Player " + _this.id + " updated in database \n");
             }
         });
-    };
-    Player.prototype.PlayerUpdate = function (data) {
     };
     return Player;
 }());

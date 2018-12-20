@@ -63,6 +63,13 @@ export class Listener {
         });
 
         //
+        // Updates player info on front end
+        //
+        this.socket.on('updatePlayer', (player: PlayerInfo) => {
+            LeftMenu.UpdatePlayer(player);
+        });
+
+        //
         //  chat jquery page listeners TODO: keep here?
         //
         $('#chatBtn').on('click', () => {

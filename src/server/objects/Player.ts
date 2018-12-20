@@ -87,7 +87,8 @@ export class Player {
         this.health = playerInfo.health;
         this.activeSkill = playerInfo.activeSkill;
         this.lastCheckIn = playerInfo.lastCheckIn;
-        this.UpdatePlayer();
+        this.UpdateSkill();
+        this.SaveInDatabase();
         this.Join();
     }
 
@@ -134,8 +135,21 @@ export class Player {
     }
 
     private UpdatePlayer(): void {
+        this.UpdateSkill();
         this.SaveInDatabase();
-        // TODO: Emit to frontend updated player info
+        var player = this.FrontendPlayerInfo();
+        this.socket.emit('updatePlayer', player);
+    }
+
+    private UpdateSkill(): void {
+        var timeNow = new Date;
+        var hours = (Math.abs(timeNow.getTime() - this.lastCheckIn.getTime()) / 3600000);
+        if (hours > 0.1) {
+            this.lastCheckIn = timeNow;
+            var skill = this.skills.find(i => i.name === this.activeSkill);
+            skill.level = (Math.round((skill.level + hours / 100)*1000)/1000);
+            skill.progress = Math.round((skill.level % 1)*100);
+        }
     }
 
     private FrontendPlayerInfo(): PlayerInfo {
@@ -176,6 +190,7 @@ export class Player {
             for(let prop in playerInfo){
                 if(prop === this.skills[s].name){
                     this.skills[s].level = playerInfo[prop];
+                    this.skills[s].progress = Math.round((this.skills[s].level % 1)*100);
                     break;
                 }
             }
@@ -212,10 +227,6 @@ export class Player {
                 }
             }
         )
-    }
-
-    PlayerUpdate(data: any){
-        
     }
 }
 
