@@ -70,6 +70,7 @@ export class Player {
             }
         });
         this.socket.on('ChangeActiveSkill', (skill: string) => {
+            this.UpdateSkill();
             var findSkill = this.skills.find(i => i.name === skill)
             if (findSkill) {
                 this.activeSkill = findSkill.name;
@@ -144,10 +145,11 @@ export class Player {
     private UpdateSkill(): void {
         var timeNow = new Date;
         var hours = (Math.abs(timeNow.getTime() - this.lastCheckIn.getTime()) / 3600000);
-        if (hours > 0.1) {
+        var levelGain = Math.round(hours/100 *1000)/1000;
+        if (levelGain >= 0.001) {
             this.lastCheckIn = timeNow;
             var skill = this.skills.find(i => i.name === this.activeSkill);
-            skill.level = (Math.round((skill.level + hours / 100)*1000)/1000);
+            skill.level += levelGain;
             skill.progress = Math.round((skill.level % 1)*100);
         }
     }
@@ -189,7 +191,7 @@ export class Player {
         for(var s = 0; s < this.skills.length; s++){
             for(let prop in playerInfo){
                 if(prop === this.skills[s].name){
-                    this.skills[s].level = playerInfo[prop];
+                    this.skills[s].level = parseFloat(playerInfo[prop]);
                     this.skills[s].progress = Math.round((this.skills[s].level % 1)*100);
                     break;
                 }

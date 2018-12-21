@@ -449,10 +449,11 @@ var Player = (function () {
         var _this = this;
         var timeNow = new Date;
         var hours = (Math.abs(timeNow.getTime() - this.lastCheckIn.getTime()) / 3600000);
-        if (hours > 0.1) {
+        var levelGain = Math.round(hours / 100 * 1000) / 1000;
+        if (levelGain >= 0.001) {
             this.lastCheckIn = timeNow;
             var skill = this.skills.find(function (i) { return i.name === _this.activeSkill; });
-            skill.level = (Math.round((skill.level + hours / 100) * 1000) / 1000);
+            skill.level += levelGain;
             skill.progress = Math.round((skill.level % 1) * 100);
         }
     };
@@ -490,7 +491,7 @@ var Player = (function () {
         for (var s = 0; s < this.skills.length; s++) {
             for (var prop in playerInfo) {
                 if (prop === this.skills[s].name) {
-                    this.skills[s].level = playerInfo[prop];
+                    this.skills[s].level = parseFloat(playerInfo[prop]);
                     this.skills[s].progress = Math.round((this.skills[s].level % 1) * 100);
                     break;
                 }
